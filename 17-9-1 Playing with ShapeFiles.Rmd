@@ -1,0 +1,201 @@
+---
+title: "R Notebook"
+output: html_notebook
+runtime: shiny
+---
+
+Here we will start looking at choropleths...
+
+#Materials template is from- https://www.r-bloggers.com/first-step-on-gis-with-r/.  
+
+##Load Packages
+```{r}
+library(maptools)
+library(rgdal)     # R wrapper around GDAL/OGR
+library(rgeos)
+library(ggplot2)   # for general plotting
+library(ggmap)     # for fortifying shapefiles
+library(dplyr)
+```
+
+##Load Data
+```{r}
+#Map of Indonesia
+provIndo <- 
+    readShapeSpatial("/Users/User/Desktop/UNICEF/Maps/shape/IDN_adm1.shp")
+
+#SDG Data
+df = read.csv(file = "/Users/User/Desktop/UNICEF/SDG Datasheet for Dashboard Development v2.csv", sep=",")
+SDG = df[,colSums(is.na(df)) != nrow(df)]
+```
+
+##Plot map to make sure its working
+```{r}
+plot(provIndo)
+```
+
+##Range of plot
+```{r}
+provIndo@bbox
+```
+
+#Materials from https://gist.github.com/lmullen/8375785
+
+```{r}
+# First read in the shapefile, using the path to the shapefile and the shapefile name minus the
+# extension as arguments
+#shapefile <- readOGR("path/to/shapefile/", "name_of_shapefile")
+```
+
+```{r}
+# Next the shapefile has to be converted to a dataframe for use in ggplot2
+shapefile_df <- fortify(provIndo)
+
+#ID to province
+idNum <- shapefile_df %>% 
+        mutate(Province = ifelse(id==0, "Aceh", ifelse(id==1, "Bali", ifelse(id==3, "Banten", ifelse(id==4, "Bengkulu", ifelse(id==33, "DI Yogyakarta", ifelse(id==7, "DKI Jakarta", ifelse(id==5, "Gorontalo", ifelse(id==8, "Jambi", ifelse(id==9, "Jawa Barat", ifelse(id==10, "Jawa Tengah", ifelse(id==11, "Jawa Timur", ifelse(id==12, "Kalimantan Barat", ifelse(id==13, "Kalimantan Selatan", ifelse(id==14, "Kalimantan Tengah", ifelse(id==15, "Kalimantan Timur", ifelse(id==16, "Kalimantan Utara", ifelse(id==2, "Kepulauan Bangka Belitung", ifelse(id==17, "Kepulauan Riau", ifelse(id==18, "Lampung", ifelse(id==20, "Maluku", ifelse(id==19, "Maluku Utara", ifelse(id==21, "Nusa Tenggara Barat", ifelse(id==22, "Nusa Tenggara Timur", ifelse(id==23, "Papua", ifelse(id==6, "Papua Barat", ifelse(id==24, "Riau", ifelse(id==25, "Sulawesi Barat", ifelse(id==26, "Sulawesi Selatan", ifelse(id==27, "Sulawesi Tengah", ifelse(id==28, "Sulawesi Tenggara", ifelse(id==29, "Sulawesi Utara", ifelse(id==30, "Sumatera Barat", ifelse(id==31, "Sumatera Selatan", "Sumatera Utara"))))))))))))))))))))))))))))))))))
+```
+
+```{r}
+# Now the shapefile can be plotted as either a geom_path or a geom_polygon.
+# Paths handle clipping better. Polygons can be filled.
+# You need the aesthetics long, lat, and group.
+map <- ggplot() +
+geom_path(data = shapefile_df, 
+          aes(x = long, y = lat, group = group),
+          color = 'gray', fill = 'white', size = .2)
+
+print(map) 
+```
+
+```{r}
+# Using the ggplot2 function coord_map will make things look better and it will also let you change
+# the projection. But sometimes with large shapefiles it makes everything blow up.
+map_projected <- map +
+  coord_map()
+  
+print(map_projected)
+```
+
+#From- http://eriqande.github.io/rep-res-web/lectures/making-maps-with-R.html
+```{r}
+ggplot(data = shapefile_df) + 
+  geom_polygon(aes(x = long, y = lat, fill = id, group = group), color = "white") + 
+  coord_fixed(1.3) +
+  guides(fill=FALSE)  # do this to leave off the color legend
+```
+
+
+#From- http://eriqande.github.io/rep-res-web/lectures/making-maps-with-R.html
+```{r}
+ggplot(data = idNum) + 
+  geom_polygon(aes(x = long, y = lat, fill = id, group = group), color = "white") + 
+  coord_fixed(1.3) +
+  guides(fill=FALSE)  # do this to leave off the color legend
+```
+
+quantiles from- https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/#a-better-color-scale
+```{r}
+SDG1 <- SDGdf %>%
+  filter(Indicator == "Proportion of population living below the national poverty line", Level == "Provincial")
+
+cacopa <- inner_join(idNum, SDG1, by = "Province")
+
+cacopa$Value <- as.numeric(as.character(cacopa$Value))
+
+# Number of color levels
+no_classes <- 4
+
+quantiles <- quantile(cacopa$Value, 
+                      probs = seq(0, 1, length.out = no_classes + 1))
+
+# here I define custom labels (the default ones would be ugly)
+labels <- c()
+for(idx in 1:length(quantiles)){
+  labels <- c(labels, paste0(round(quantiles[idx], 2), 
+                             " - ", 
+                             round(quantiles[idx + 1], 2)))
+}
+# I need to remove the last label 
+# because that would be something like "66.62 - NA"
+labels <- labels[1:length(labels)-1]
+
+# here I actually create a new 
+# variable on the dataset with the quantiles
+cacopa$Value_quantiles <- cut(cacopa$Value, 
+                                     breaks = quantiles, 
+                                     labels = labels, 
+                                     include.lowest = T)
+```
+https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/#a-better-color-scale
+```{r}
+p <- ggplot() +
+    # municipality polygons (watch how I 
+   # use the new variable for the fill aesthetic)
+    geom_polygon(data = cacopa, aes(fill = Value_quantiles, 
+                                      x = long, 
+                                      y = lat, 
+                                      group = group)) +
+    # municipality outline
+    geom_path(data = cacopa, aes(x = long, 
+                                   y = lat, 
+                                   group = group), 
+              color = "white", size = 0.1) +
+    coord_equal() +
+    theme_map() +
+    labs(x = NULL, 
+         y = NULL, 
+         title = "Goal 1: No Poverty", 
+         subtitle = "Proportion of population living below the national poverty line", 
+         caption = "SDG Baseline Report on children in Indonesia") +
+  # now the discrete-option is used, 
+  # and we use guide_legend instead of guide_colourbar
+  scale_fill_viridis(
+    option = "viridis",
+    name = "Value",
+    discrete = T,
+    direction = -1,
+    guide = guide_legend(
+     keyheight = unit(5, units = "mm"),
+     title.position = 'top',
+     reverse = T
+  ))
+p
+```
+
+
+
+```{r}
+shapefileBase <- ggplot(data = shapefile_df, mapping = aes(x = long, y = lat, group = group)) + 
+  coord_fixed(1.3) + 
+  geom_polygon(color = "white", fill = "gray")
+shapefileBase #+ theme_nothing()
+```
+
+
+```{r}
+ditch_the_axes <- theme(
+  axis.text = element_blank(),
+  axis.line = element_blank(),
+  axis.ticks = element_blank(),
+  panel.border = element_blank(),
+  panel.grid = element_blank(),
+  axis.title = element_blank()
+  )
+
+elbow_room1 <- shapefileBase + 
+      geom_polygon(data = cacopa, aes(fill = Value), color = "white") +
+      geom_polygon(color = "white", fill = NA) +
+      theme_bw() +
+      ditch_the_axes
+
+elbow_room1 + scale_fill_gradientn(na.value = "grey", colours = c("deepskyblue3", "orange3","red4", "chocolate4"))
+
+elbow_room1 = theme(text = element_text(family = "Arial Narrow", size = 8),
+          plot.title = element_text(size = 12, face = "bold"),
+          plot.margin = unit(c(0, 0.25, 0.0, 0.25), "in"),
+          panel.border = element_rect(fill = NA, colour = "#cccccc"),
+          legend.text = element_text(size = 8),
+          legend.position = c(0.9, 0.25))
+```
+
