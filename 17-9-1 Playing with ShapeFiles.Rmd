@@ -29,23 +29,19 @@ df = read.csv(file = "/Users/User/Desktop/UNICEF/SDG Datasheet for Dashboard Dev
 SDG = df[,colSums(is.na(df)) != nrow(df)]
 ```
 
-##Plot map to make sure its working
+##Plot map to make sure its working using base plot
 ```{r}
 plot(provIndo)
 ```
 
-##Range of plot
+##Range of map
 ```{r}
 provIndo@bbox
 ```
 
 #Materials from https://gist.github.com/lmullen/8375785
 
-```{r}
-# First read in the shapefile, using the path to the shapefile and the shapefile name minus the
-# extension as arguments
-#shapefile <- readOGR("path/to/shapefile/", "name_of_shapefile")
-```
+More data modification
 
 ```{r}
 # Next the shapefile has to be converted to a dataframe for use in ggplot2
@@ -56,10 +52,9 @@ idNum <- shapefile_df %>%
         mutate(Province = ifelse(id==0, "Aceh", ifelse(id==1, "Bali", ifelse(id==3, "Banten", ifelse(id==4, "Bengkulu", ifelse(id==33, "DI Yogyakarta", ifelse(id==7, "DKI Jakarta", ifelse(id==5, "Gorontalo", ifelse(id==8, "Jambi", ifelse(id==9, "Jawa Barat", ifelse(id==10, "Jawa Tengah", ifelse(id==11, "Jawa Timur", ifelse(id==12, "Kalimantan Barat", ifelse(id==13, "Kalimantan Selatan", ifelse(id==14, "Kalimantan Tengah", ifelse(id==15, "Kalimantan Timur", ifelse(id==16, "Kalimantan Utara", ifelse(id==2, "Kepulauan Bangka Belitung", ifelse(id==17, "Kepulauan Riau", ifelse(id==18, "Lampung", ifelse(id==20, "Maluku", ifelse(id==19, "Maluku Utara", ifelse(id==21, "Nusa Tenggara Barat", ifelse(id==22, "Nusa Tenggara Timur", ifelse(id==23, "Papua", ifelse(id==6, "Papua Barat", ifelse(id==24, "Riau", ifelse(id==25, "Sulawesi Barat", ifelse(id==26, "Sulawesi Selatan", ifelse(id==27, "Sulawesi Tengah", ifelse(id==28, "Sulawesi Tenggara", ifelse(id==29, "Sulawesi Utara", ifelse(id==30, "Sumatera Barat", ifelse(id==31, "Sumatera Selatan", "Sumatera Utara"))))))))))))))))))))))))))))))))))
 ```
 
+Now the shapefile can be plotted as either a geom_path or a geom_polygon. Paths handle clipping better. Polygons can be filled. You need the aesthetics long, lat, and group.
+
 ```{r}
-# Now the shapefile can be plotted as either a geom_path or a geom_polygon.
-# Paths handle clipping better. Polygons can be filled.
-# You need the aesthetics long, lat, and group.
 map <- ggplot() +
 geom_path(data = shapefile_df, 
           aes(x = long, y = lat, group = group),
@@ -68,16 +63,17 @@ geom_path(data = shapefile_df,
 print(map) 
 ```
 
+Using the ggplot2 function coord_map will make things look better and it will also let you change the projection. But sometimes with large shapefiles it makes everything blow up.
+
 ```{r}
-# Using the ggplot2 function coord_map will make things look better and it will also let you change
-# the projection. But sometimes with large shapefiles it makes everything blow up.
 map_projected <- map +
   coord_map()
   
 print(map_projected)
 ```
 
-#From- http://eriqande.github.io/rep-res-web/lectures/making-maps-with-R.html
+From- http://eriqande.github.io/rep-res-web/lectures/making-maps-with-R.html
+
 ```{r}
 ggplot(data = shapefile_df) + 
   geom_polygon(aes(x = long, y = lat, fill = id, group = group), color = "white") + 
@@ -86,7 +82,8 @@ ggplot(data = shapefile_df) +
 ```
 
 
-#From- http://eriqande.github.io/rep-res-web/lectures/making-maps-with-R.html
+From- http://eriqande.github.io/rep-res-web/lectures/making-maps-with-R.html
+
 ```{r}
 ggplot(data = idNum) + 
   geom_polygon(aes(x = long, y = lat, fill = id, group = group), color = "white") + 
@@ -95,6 +92,7 @@ ggplot(data = idNum) +
 ```
 
 quantiles from- https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/#a-better-color-scale
+
 ```{r}
 SDG1 <- SDGdf %>%
   filter(Indicator == "Proportion of population living below the national poverty line", Level == "Provincial")
@@ -127,7 +125,9 @@ cacopa$Value_quantiles <- cut(cacopa$Value,
                                      labels = labels, 
                                      include.lowest = T)
 ```
+
 https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/#a-better-color-scale
+
 ```{r}
 p <- ggplot() +
     # municipality polygons (watch how I 
