@@ -1,0 +1,736 @@
+---
+title: "Dynamic Tables"
+author: "Millie"
+date: "11 September 2017"
+output: html_notebook
+runtime: shiny
+---
+
+###Packages
+
+```{r LoadPackages}
+library(shiny)
+library(DT)
+library(ggplot2)
+library(dplyr)
+```
+
+###Data
+
+```{r LoadData}
+#SDG Data
+df = read.csv(file = "/Users/User/Desktop/R Prac/UNICEF Project/SDG.csv", sep=",")
+
+#Remove empty columns from dataset 
+SDG = df[,colSums(is.na(df)) != nrow(df)]
+
+SDGdf1 <- SDG[1:4112,] %>%
+        mutate(Level = ifelse(Province == "All Indonesia", "National", 
+                              "Provincial"))
+
+
+SDGdf <- SDGdf1 %>%
+        select("SDG" = "SDG.Goal", "Indicator" = "Indicator", "Value" = "Value", "Level" = "Level", "Province" = "Province",  "Gender" = "Gender..All.Male.Female.", "Geography" = "Geography..All.Urban.Rural.", "Disability" = "Disability..All.With.Without.", "WealthQuantile" = "Wealth.Quintile..All.Poorest.Second.Middle.Fourth.Richest.", "Education" = "Educational.attainment.of.household.head", "Age" = "Age.Range..i.e..0.24.M..15.60.Y.", "Year" = "Year", "Source" = "Source")
+
+SDGnames <- c("Goal 1: No Poverty", "Goal 2: Zero Hunger", "Goal 3: Good Health and Well-Being", "Goal 4 : Quality Education", "Goal 5: Gender Equality", "Goal 6: Clean Water and Sanitation", "Goal 8: Decent Work and Economic Growth", "Goal 13: Climate Action", "Goal 16: Peace Justice and Strong Institutions") 
+
+SDGs <- c("Goal 1: No Poverty" = 1, "Goal 2: Zero Hunger" = 2, "Goal 3: Good Health and Well-Being" = 3, "Goal 4 : Quality Education" = 4, "Goal 5: Gender Equality" = 5, "Goal 6: Clean Water and Sanitation" = 6, "Goal 8: Decent Work and Economic Growth" = 8, "Goal 13: Climate Action" = 13, "Goal 16: Peace Justice and Strong Institutions" = 16)
+
+```
+
+##Easy Example 
+
+
+
+##Example 1
+
+Basic dynamic table from https://shiny.rstudio.com/articles/datatables.html
+
+```{r Example1}
+ui <- basicPage(
+  h2("SDG Data"),
+  DT::dataTableOutput("mytable")
+)
+
+server <- function(input, output) {
+  output$mytable = DT::renderDataTable({
+    SDGdf
+  })
+}
+  
+shinyApp(ui, server)
+```
+
+
+##Example 2
+
+Large dynamic table from https://shiny.rstudio.com/articles/datatables.html
+
+```{r Example2}
+ui <- fluidPage(
+  title = "Examples of DataTables",
+  sidebarLayout(
+    sidebarPanel(
+      conditionalPanel(
+        'input.dataset === "diamonds"',
+        checkboxGroupInput("show_vars", "Columns in diamonds to show:",
+                           names(diamonds), selected = names(diamonds))
+      ),
+      conditionalPanel(
+        'input.dataset === "mtcars"',
+        helpText("Click the column header to sort a column.")
+      ),
+      conditionalPanel(
+        'input.dataset === "iris"',
+        helpText("Display 5 records by default.")
+      )
+    ),
+    mainPanel(
+      tabsetPanel(
+        id = 'dataset',
+        tabPanel("diamonds", DT::dataTableOutput("mytable1")),
+        tabPanel("mtcars", DT::dataTableOutput("mytable2")),
+        tabPanel("iris", DT::dataTableOutput("mytable3"))
+      )
+    )
+  )
+)
+
+server <- function(input, output) {
+  
+  # choose columns to display
+  diamonds2 = diamonds[sample(nrow(diamonds), 1000), ]
+  output$mytable1 <- DT::renderDataTable({
+    DT::datatable(diamonds2[, input$show_vars, drop = FALSE])
+  })
+  
+  # sorted columns are colored now because CSS are attached to them
+  output$mytable2 <- DT::renderDataTable({
+    DT::datatable(mtcars, options = list(orderClasses = TRUE))
+  })
+  
+  # customize the length drop-down menu; display 5 rows per page by default
+  output$mytable3 <- DT::renderDataTable({
+    DT::datatable(iris, options = list(lengthMenu = c(5, 30, 50), pageLength = 5))
+  })
+  
+}
+
+shinyApp(ui, server)
+```
+
+##Check box group example
+
+From- https://shiny.rstudio.com/reference/shiny/latest/checkboxGroupInput.html
+
+```{r CheckboxExample}
+ui <- fluidPage(
+  checkboxGroupInput("variable", "Variables to show:",
+                     c("Cylinders" = "cyl",
+                       "Transmission" = "am",
+                       "Gears" = "gear")),
+  tableOutput("data")
+)
+
+server <- function(input, output, session) {
+  output$data <- renderTable({
+    mtcars[, c("mpg", input$variable), drop = FALSE]
+  }, rownames = TRUE)
+}
+
+shinyApp(ui, server)
+```
+
+##Icon Example
+
+```{r IconExample}
+ui <- fluidPage(
+  checkboxGroupInput("icons", "Choose icons:",
+    choiceNames =
+      list(icon("calendar"), icon("bed"),
+           icon("cog"), icon("bug")),
+    choiceValues =
+      list("calendar", "bed", "cog", "bug")
+  ),
+  textOutput("txt")
+)
+
+server <- function(input, output) {
+  output$txt <- renderText({
+    icons <- paste(input$icons, collapse = ", ")
+    paste("You chose", icons)
+  })
+}
+
+shinyApp(ui, server)
+```
+
+##Downloadable Table
+
+Script from- https://shiny.rstudio.com/articles/download.html
+
+##Interactive table and figure using DT
+
+Script from- https://rstudio.github.io/DT/shiny.html 
+
+###Example 1
+
+```{r ColorCells}
+DT::renderDataTable({
+  datatable(SDGdf) %>% formatStyle(
+    'Province',
+    backgroundColor = styleInterval(3.4, c('gray', 'yellow'))
+  )
+})
+```
+
+
+###Final Example Interactive Table and Plot
+
+Dynamic table from https://shiny.rstudio.com/articles/datatables.html
+
+```{r ReactiveTableAndPlot}
+ui <- fluidPage(
+
+  title = 'Select Table Rows',
+
+  h1('A Client-side Table'),
+
+  fluidRow(
+    column(6, DT::dataTableOutput('x1')),
+    column(6, plotOutput('x2', height = 500))
+  ),
+
+  hr(),
+
+  h1('A Server-side Table'),
+
+  fluidRow(
+    column(9, DT::dataTableOutput('x3')),
+    column(3, verbatimTextOutput('x4'))
+  )
+
+)
+
+server <- function(input, output){
+
+  output$x1 = DT::renderDataTable(cars, server = FALSE)
+
+  # highlight selected rows in the scatterplot
+  output$x2 = renderPlot({
+    s = input$x1_rows_selected
+    par(mar = c(4, 4, 1, .1))
+    plot(cars)
+    if (length(s)) points(cars[s, , drop = FALSE], pch = 19, cex = 2)
+  })
+
+  # server-side processing
+  mtcars2 = mtcars[, 1:8]
+  output$x3 = DT::renderDataTable(mtcars2, server = TRUE)
+
+  # print the selected indices
+  output$x4 = renderPrint({
+    s = input$x3_rows_selected
+    if (length(s)) {
+      cat('These rows were selected:\n\n')
+      cat(s, sep = ', ')
+    }
+  })
+
+}
+shinyApp(ui, server)
+```
+
+###Notes
+
+Pre-selection
+
+The selection argument of datatable() can also include a component selected to specify which rows/columns/cells to be pre-selected when the table is initialized. When target = 'row' or 'column', selected is a vector of row or column indices. For the case of target = 'row+column', selected should be a list of two components rows and cols, e.g. list(rows = c(1, 2, 4, 9), cols = c(1, 3)). For target = 'cell', it should be a matrix of two columns: the first column is the row indices of selected cells, and the second column is the column indices.
+
+##Mine
+
+The data
+
+```{r SelectSDG1}
+SDG1 <- SDGdf%>%
+        filter(SDG==1)
+```
+
+##Minimum working example
+
+Dynamic table from https://shiny.rstudio.com/articles/datatables.html
+
+```{r MyData}
+ui <- fluidPage(
+  titlePanel("Sustainable Development Goals"),
+  sidebarLayout(
+    sidebarPanel(
+      checkboxGroupInput(inputId = "show_vars", label = "Columns for Goal 1: No Poverty",
+                           choices = names(SDG1), selected = names(SDG1)
+      ),
+      # Button
+      downloadButton("downloadData", "Download")    
+      ),
+
+    mainPanel(
+      tabsetPanel(
+        id = 'dataset',
+        tabPanel("SDG1", DT::dataTableOutput("SDGtable1")))
+      )
+    )
+
+  )
+
+
+server <- function(input, output) {
+  
+        SDG1 <- SDGdf%>%
+        filter(SDG==1)
+        
+  # choose columns to display
+  output$SDGtable1 <- DT::renderDataTable({
+    DT::datatable(SDG1[, input$show_vars, drop = FALSE])
+  })
+  
+   # Downloadable csv of selected dataset ----
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      paste(input$dataset, ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(datasetInput(), file, row.names = FALSE)
+    })
+}
+
+shinyApp(ui, server)
+```
+
+Making 3 tabs 
+
+Large dynamic table from https://shiny.rstudio.com/articles/datatables.html
+
+**Cannot get the checkboxgroup to work....**
+
+```{r MyDataTabs}
+#Generate Data
+SDG1 <- SDGdf%>%
+        filter(SDG==1)
+        
+SDG2 <- SDGdf%>%
+        filter(SDG==2)
+        
+SDG3 <- SDGdf%>%
+        filter(SDG==3)
+
+#Generate tables
+ui <- fluidPage(
+  titlePanel("Sustainable Development Goals"),
+  sidebarLayout(
+    sidebarPanel(
+      conditionalPanel (
+        condition = 'input.dataset === "SDG1"',
+        checkboxGroupInput(inputId = "show_vars1", label = "Columns for Goal 1: No Poverty",
+                           choices = names(SDG1), selected = names(SDG1))
+      ),
+      conditionalPanel(
+        'input.dataset === "SDG2"',
+        checkboxGroupInput(inputId = "show_vars2", label = "Columns for Goal 2: Zero Hunger",
+                           choices = names(SDG2), selected = names(SDG2))
+      ),
+      conditionalPanel(
+        'input.dataset === "SDG3"',
+        checkboxGroupInput(inputId = "show_vars3", label = "Columns for Goal 3: Good Health and Well-Being",
+                           choices = names(SDG3), selected = names(SDG3))
+      ),
+        # Button
+      downloadButton("downloadData", "Download")
+    ),
+   mainPanel(
+      tabsetPanel(
+        id = 'dataset',
+        tabPanel("SDG 1", DT::dataTableOutput("SDGtable1")),
+        tabPanel("SDG 2", DT::dataTableOutput("SDGtable2")),
+        tabPanel("SDG 3", DT::dataTableOutput("SDGtable3"))
+        )
+      )
+  )
+)
+
+
+server <- function(input, output) {
+
+        output$SDGtable1 <- DT::renderDataTable({
+                DT::datatable(SDG1[, input$show_vars1, drop = FALSE])
+                })
+        
+        output$SDGtable2 <- DT::renderDataTable({
+                DT::datatable(SDG2[, input$show_vars2, drop = FALSE])
+                })
+        
+        output$SDGtable3 <- DT::renderDataTable({
+                DT::datatable(SDG3[, input$show_vars3, drop = FALSE])
+                })  
+       
+        # Downloadable csv of selected dataset ----
+        output$downloadData <- downloadHandler(
+                filename = function() {
+                        paste(input$dataset, ".csv", sep = "")
+                        },
+                content = function(file) {
+                        write.csv(datasetInput(), file, row.names = FALSE)
+                })
+        }
+
+shinyApp(ui, server)
+```
+
+### Playing with interactive table + graph
+
+NEEDS WORK!!! 
+
+```{r MyDataInteractiveGraph}
+ui <- fluidPage(
+
+  title = 'Select Table Rows',
+
+  h1('A Client-side Table'),
+
+  fluidRow(
+    column(6, DT::dataTableOutput('x1')),
+    column(6, plotOutput('x2', height = 500))
+  ),
+
+  hr(),
+
+  h1('A Server-side Table'),
+
+  fluidRow(
+    column(9, DT::dataTableOutput('x3')),
+    column(3, verbatimTextOutput('x4'))
+  )
+
+)
+
+server <- function(input, output){
+
+  output$x1 = DT::renderDataTable(SDGdf, server = FALSE)
+
+  # highlight selected rows in the scatterplot
+  output$x2 = renderPlot({
+    s = input$x1_rows_selected
+    par(mar = c(4, 4, 1, .1))
+    plot(SDGdf)
+    if (length(s)) points(SDGdf[s, , drop = FALSE], pch = 19, cex = 2)
+  })
+
+  # server-side processing
+  SDGdf2 = SDGdf[, 1:8]
+  output$x3 = DT::renderDataTable(SDGdf2, server = TRUE)
+
+  # print the selected indices
+  output$x4 = renderPrint({
+    s = input$x3_rows_selected
+    if (length(s)) {
+      cat('These rows were selected:\n\n')
+      cat(s, sep = ', ')
+    }
+  })
+
+}
+shinyApp(ui, server)
+```
+
+## Download with drop down to select data- works for my data
+
+Code from- https://shiny.rstudio.com/articles/download.html
+
+```{r MyDataWithDropdown}
+ui <- fluidPage(
+
+  # App title ----
+  titlePanel("Downloading Data"),
+
+  # Sidebar layout with input and output definitions ----
+  sidebarLayout(
+
+    # Sidebar panel for inputs ----
+    sidebarPanel(
+
+      # Input: Choose dataset ----
+      selectInput("dataset", "Choose a Sustainable Development Goal:",
+                  choices = c("Goal 1: No Poverty", "Goal 2: Zero Hunger", "Goal 3: Good Health and Well-Being", "Goal 4 : Quality Education", "Goal 5: Gender Equality", "Goal 6: Clean Water and Sanitation", "Goal 8: Decent Work and Economic Growth", "Goal 13: Climate Action", "Goal 16: Peace Justice and Strong Institutions")),
+
+      # Button
+      downloadButton("downloadData", "Download")
+
+    ),
+
+    # Main panel for displaying outputs ----
+    mainPanel(
+
+      tableOutput("table")
+
+    )
+
+  )
+)
+
+server <- function(input, output) {
+
+        #Generate Data
+SDG1 <- SDGdf%>%
+        filter(SDG==1)
+        
+SDG2 <- SDGdf%>%
+        filter(SDG==2)
+        
+SDG3 <- SDGdf%>%
+        filter(SDG==3)
+
+SDG4 <- SDGdf%>%
+        filter(SDG==4)
+
+SDG5 <- SDGdf%>%
+        filter(SDG==5)
+
+SDG6 <- SDGdf%>%
+        filter(SDG==6)
+
+SDG8 <- SDGdf%>%
+        filter(SDG==8)
+
+SDG13 <- SDGdf%>%
+        filter(SDG==13)
+
+SDG16 <- SDGdf%>%
+        filter(SDG==16)
+        
+  # Reactive value for selected dataset ----
+  datasetInput <- reactive({
+    switch(input$dataset,
+           "Goal 1: No Poverty" = SDG1, "Goal 2: Zero Hunger" = SDG2, "Goal 3: Good Health and Well-Being" = SDG3, "Goal 4 : Quality Education" = SDG4, "Goal 5: Gender Equality" = SDG5, "Goal 6: Clean Water and Sanitation" = SDG6, "Goal 8: Decent Work and Economic Growth" = SDG8, "Goal 13: Climate Action" = SDG13, "Goal 16: Peace Justice and Strong Institutions" = SDG16
+)
+  })
+
+  # Table of selected dataset ----
+  output$table <- renderTable({
+    datasetInput()
+  })
+
+  # Downloadable csv of selected dataset ----
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      paste(input$dataset, ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(datasetInput(), file, row.names = FALSE)
+    }
+  )
+
+}
+shinyApp(ui, server)
+```
+
+## Final dynamic table- dropdown and checkbox, working for my data
+
+https://stackoverflow.com/questions/45460304/making-a-dynamic-checkboxgroupinput-with-shiny
+
+```{r MyDataWithDropdownAndCheckbox}
+  ui <- fluidPage(
+    # App title ----
+  titlePanel("Downloading Data"),
+
+  # Sidebar layout with input and output definitions ----
+  sidebarLayout(
+
+    # Sidebar panel for inputs ----
+    sidebarPanel(
+            # SDG Input
+            selectInput("select1", "Select SDG:", choices = c(
+"Goal 1: No Poverty" = 1, "Goal 2: Zero Hunger" = 2, "Goal 3: Good Health and Well-Being" = 3, "Goal 4 : Quality Education" = 4, "Goal 5: Gender Equality" = 5, "Goal 6: Clean Water and Sanitation" = 6, "Goal 8: Decent Work and Economic Growth" = 8, "Goal 13: Climate Action" = 13, "Goal 16: Peace Justice and Strong Institutions" = 16), selected = "Goal 1: No Poverty"),
+
+            #Checkbox output 
+            uiOutput("checkbox"),
+
+            # Button
+            downloadButton("downloadData", "Download")
+    ),
+
+    # Main panel for displaying outputs ----
+    mainPanel(
+            # Table output
+            DT::dataTableOutput("SDGtable1")
+    )
+  )
+)
+
+  # Server function
+  server <- function(input, output){
+          
+          # Generate the checkbox
+          output$checkbox <- renderUI({
+                  choice <-  unique(SDGdf[SDGdf$SDG %in% input$select1, "Indicator"])
+                  checkboxGroupInput("checkbox","Select Indicator", choices = choice, selected = choice[1])
+                  })
+          
+          # Generate data frame
+          df <-reactive({
+                  SDGdf %>% 
+                          filter(SDGdf$SDG %in% input$select1, SDG$Indicator %in% input$checkbox)
+                  })
+          
+          # Generate data table 
+          output$SDGtable1 <- DT::renderDataTable({
+                  DT::datatable(df())
+                  })
+          
+          # Downloadable csv of selected dataset ----
+          output$downloadData <- downloadHandler(
+                filename = function() {
+                        paste(input$dataset, ".csv", sep = "")
+                        },
+                content = function(file) {
+                        write.csv(datasetInput(), file, row.names = FALSE)
+                })
+     
+   }
+shinyApp(ui, server)
+```
+
+
+## Final dynamic table- dropdown and checkbox, working for my data
+
+https://stackoverflow.com/questions/45460304/making-a-dynamic-checkboxgroupinput-with-shiny
+
+```{r MyDataWithDropdownAndCheckboxAndLevelCheckbox}
+SDGdf2 <- SDGdf %>%
+        filter(Province == "Aceh")
+
+SDGprov <- SDGdf2%>%
+        select("SDG", "Indicator" = "Indicator", "Value" = "Value", "Province" = "Province", "Age" = "Age", "Year" = "Year", "Source" = "Source")
+
+
+
+ui <- fluidPage(
+    # App title ----
+  titlePanel("Downloading Data"),
+
+  # Sidebar layout with input and output definitions ----
+  sidebarLayout(
+
+    # Sidebar panel for inputs ----
+    sidebarPanel(
+            # SDG Input
+            selectInput("select1", "Select Sustainable Development Goal:", choices = c(
+"Goal 1: No Poverty" = 1, "Goal 2: Zero Hunger" = 2, "Goal 3: Good Health and Well-Being" = 3, "Goal 4 : Quality Education" = 4, "Goal 5: Gender Equality" = 5, "Goal 6: Clean Water and Sanitation" = 6, "Goal 8: Decent Work and Economic Growth" = 8, "Goal 13: Climate Action" = 13, "Goal 16: Peace Justice and Strong Institutions" = 16), selected = "Goal 1: No Poverty"),
+
+            #Checkbox output 
+            uiOutput("checkbox1"),
+
+            # Button
+            downloadButton("downloadData", "Download")
+    ),
+
+    # Main panel for displaying outputs ----
+    mainPanel(
+            
+            #Checkbox output 
+            #uiOutput("checkbox2"),
+            
+            # Table output
+            DT::dataTableOutput("SDGtable1")
+    )
+  )
+)
+
+  # Server function
+  server <- function(input, output){
+          
+          # Generate the checkbox
+          output$checkbox1 <- renderUI({
+                  choice <-  unique(SDGprov[SDGprov$SDG %in% input$select1, "Indicator"])
+                  checkboxGroupInput("checkbox1","Select Indicator:", choices = choice, 
+                                     selected = choice[1])
+                  })
+          
+          # Generate the checkbox
+          #output$checkbox2 <- renderUI({
+           #       choiceLevel <-  unique(SDGprov[SDGprov$Indicator %in% input$checkbox1, "Level"])
+            #      checkboxGroupInput("checkbox2","Select Level:", choices = choiceLevel,
+             #                        selected = choiceLevel[1])
+              #    })
+          
+          # Generate data frame
+          df <-reactive({
+                  SDGprov %>% 
+                          filter(SDGprov$SDG %in% input$select1, 
+                                 SDGprov$Indicator %in% input$checkbox1#,
+                                 #SDGprov$Level %in% input$checkbox2
+                                 )
+   
+                  })
+          
+          # Generate data table 
+          output$SDGtable1 <- DT::renderDataTable({
+                  DT::datatable(df())
+                  })
+          
+          # Downloadable csv of selected dataset ----
+          output$downloadData <- downloadHandler(
+                filename = function() {
+                        paste(input$dataset, ".csv", sep = "")
+                        },
+                content = function(file) {
+                        write.csv(datasetInput(), file, row.names = FALSE)
+                })
+     
+   }
+shinyApp(ui, server)
+```
+
+## Dynamic table with column head dropdowns  
+
+Code from- https://stackoverflow.com/questions/33797072/r-datatable-hide-search-box-for-individual-columns
+
+```{r TableWithColumnDropdowns}
+ ui = fluidPage(tags$head(tags$style(
+    HTML("input[type='search']:disabled {visibility:hidden}")
+  )),
+  titlePanel("Downloading Data"),
+
+  # Sidebar layout with input and output definitions ----
+  sidebarLayout(
+
+    # Sidebar panel for inputs ----
+    sidebarPanel(
+            # SDG Input
+            checkboxGroupInput("show_vars", "Desired Data to Display:",
+                           names(SDGdf), selected = names(SDGdf))
+            ),
+
+            # Button
+            downloadButton("downloadData", "Download")
+    ),
+
+    # Main panel for displaying outputs ----
+    mainPanel(
+            # Table output
+            DT::dataTableOutput("tbl")
+    )
+  )
+
+  server = function(input, output) {
+          
+    output$tbl = DT::renderDataTable(datatable(
+      SDGdf[, input$show_vars, drop = FALSE],
+      filter = 'top',
+      options = list(columnDefs = list(list(
+        targets = c("SDG", "Indicator", "Level", "Gender"), searchable = FALSE
+      )),
+      pageLength = 10)
+    ))
+  }
+
+shinyApp(ui, server)
+```
+
