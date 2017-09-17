@@ -1,2 +1,3 @@
 # exploring_shiny
-Learning how to use shiny and all that sparkle
+
+This Repo is a sampling of some of my current projects including those using the R package shiny. 
