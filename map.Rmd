@@ -13,7 +13,6 @@ library(ggplot2)   # for general plotting
 library(ggmap)     # for fortifying shapefiles
 library(dplyr)
 library(ggthemes)
-library(viridis)
 ```
 
 ##Load Data
