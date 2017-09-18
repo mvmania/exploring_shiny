@@ -1,0 +1,138 @@
+---
+title: "Interactive Map"
+output: html_notebook
+runtime: shiny
+---
+
+##Load Packages
+```{r}
+library(maptools)
+library(rgdal)     # R wrapper around GDAL/OGR
+library(rgeos)
+library(ggplot2)   # for general plotting
+library(ggmap)     # for fortifying shapefiles
+library(dplyr)
+library(ggthemes)
+library(viridis)
+```
+
+##Load Data
+
+Data transformations from- http://eriqande.github.io/rep-res-web/lectures/making-maps-with-R.html
+
+Quantiles  and style from- https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/#a-better-color-scale
+
+```{r}
+# Read in map of Indonesia
+provIndo <- 
+    readShapeSpatial("/Users/User/Desktop/UNICEF/Maps/shape/IDN_adm1.shp")
+
+# Read in and modify SDG Data
+df = read.csv(file = "/Users/User/Desktop/R Prac/UNICEF Project/SDG.csv", sep=",")
+
+# Remove empty columns
+SDG = df[,colSums(is.na(df)) != nrow(df)]
+
+# Create column to indicate if a row is provincial or national data
+SDGdf1 <- SDG[1:4112,] %>%
+        mutate(Level = ifelse(Province == "All Indonesia", "National", 
+                              "Provincial"))
+
+# Rename the variables to make them easier to work with and select the ones that apply to our needs
+SDGdf2 <- SDGdf1 %>%
+        select("SDG" = "SDG.Goal", "Indicator" = "Indicator", "Value" = "Value", "Level" = "Level", "Province" = "Province", "Age" = "Age.Range..i.e..0.24.M..15.60.Y.", "Year" = "Year", "Source" = "Source")
+
+# Remove all national level data
+SDGdf <- SDGdf2 %>%
+        filter(Level == "Provincial")
+
+# Convert the shapefile to a dataframe for use in ggplot2
+shapefile_df <- fortify(provIndo)
+
+#Attach ID number from the shapefile to the province name from our data set 
+idNum <- shapefile_df %>% 
+        mutate(Province = ifelse(id==0, "Aceh", ifelse(id==1, "Bali", ifelse(id==3, "Banten", ifelse(id==4, "Bengkulu", ifelse(id==33, "DI Yogyakarta", ifelse(id==7, "DKI Jakarta", ifelse(id==5, "Gorontalo", ifelse(id==8, "Jambi", ifelse(id==9, "Jawa Barat", ifelse(id==10, "Jawa Tengah", ifelse(id==11, "Jawa Timur", ifelse(id==12, "Kalimantan Barat", ifelse(id==13, "Kalimantan Selatan", ifelse(id==14, "Kalimantan Tengah", ifelse(id==15, "Kalimantan Timur", ifelse(id==16, "Kalimantan Utara", ifelse(id==2, "Kepulauan Bangka Belitung", ifelse(id==17, "Kepulauan Riau", ifelse(id==18, "Lampung", ifelse(id==20, "Maluku", ifelse(id==19, "Maluku Utara", ifelse(id==21, "Nusa Tenggara Barat", ifelse(id==22, "Nusa Tenggara Timur", ifelse(id==23, "Papua", ifelse(id==6, "Papua Barat", ifelse(id==24, "Riau", ifelse(id==25, "Sulawesi Barat", ifelse(id==26, "Sulawesi Selatan", ifelse(id==27, "Sulawesi Tengah", ifelse(id==28, "Sulawesi Tenggara", ifelse(id==29, "Sulawesi Utara", ifelse(id==30, "Sumatera Barat", ifelse(id==31, "Sumatera Selatan", "Sumatera Utara"))))))))))))))))))))))))))))))))))
+
+# Select a specific indicator
+SDG1 <- SDGdf %>%
+  filter(Indicator == "Proportion of population living below the national poverty line")
+
+# Join Indicator data frame to the map data frame using the province names
+shapeSDG <- inner_join(idNum, SDG1, by = "Province")
+
+# Coerce the Value variable from factor to numeric so that it can be used in ggplot
+shapeSDG$Value <- as.numeric(as.character(shapeSDG$Value))
+
+# Number of color levels
+no_classes <- 4
+
+# Generate quantile ranges to map
+brks <- quantile(shapeSDG$Value, 
+                      probs = seq(0, 1, length.out = no_classes + 1))
+
+# compute labels
+labels <- c()
+
+# round the labels (actually, only the extremes)
+for(idx in 1:length(brks)){
+  labels <- c(labels,round(brks[idx + 1], 2))
+}
+
+# Remove the last label because that would be something like "66.62 - NA"
+labels <- labels[1:length(labels)-1]
+
+# Create a new variable with the quantiles
+shapeSDG$Value_brks <- cut(shapeSDG$Value, 
+                                     breaks = brks, 
+                                     labels = labels, 
+                                     include.lowest = T)
+
+brks_scale <- levels(shapeSDG$Value_brks)
+labels_scale <- rev(brks_scale)
+
+# UNICEF colour palette
+UNICEF = palette(c('#00689D','#DDA63A', '#C5192D', '#F1F1F1'))
+```
+
+##Map
+
+Code from- https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/#a-better-color-scale
+
+```{r}
+p <- ggplot() +
+    
+        # Province polygons (use the new variable for the fill aesthetic)
+    geom_polygon(data = shapeSDG, aes(fill = Value_quantiles, 
+                                      x = long, 
+                                      y = lat, 
+                                      group = group)) +
+    
+        # Province outline
+    geom_path(data = shapeSDG, aes(x = long, 
+                                   y = lat, 
+                                   group = group), 
+              color = "white", size = 0.1) +
+    coord_equal() +
+    theme_map() +
+    labs(x = NULL, 
+         y = NULL, 
+         title = "Goal 1: No Poverty", 
+         subtitle = "Proportion of population living below the national poverty line", 
+         caption = "SDG Baseline Report on children in Indonesia") +
+  
+        # The discrete-option is used and we use guide_legend instead of guide_colourbar
+  scale_fill_manual(
+      values = rev(c('#00689D','#DDA63A', '#C5192D', '#F1F1F1')),
+      breaks = rev(brks_scale),
+      drop = FALSE,
+      labels = labels,
+      guide = guide_legend(
+     keyheight = unit(5, units = "mm"),
+     title.position = 'top',
+     title=NULL, 
+     reverse = T
+      )
+    )
+p
+
+```
