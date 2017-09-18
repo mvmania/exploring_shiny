@@ -1,0 +1,12 @@
+name: dynamictable
+title:
+username:
+account: millie
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 214563
+bundleId: 983124
+url: https://millie.shinyapps.io/dynamictable/
+when: 1505476043.95714
+asMultiple: FALSE
+asStatic: FALSE
