@@ -88,9 +88,6 @@ shapeSDG$Value_brks <- cut(shapeSDG$Value,
 
 brks_scale <- levels(shapeSDG$Value_brks)
 labels_scale <- rev(brks_scale)
-
-# UNICEF colour palette
-UNICEF = palette(c('#00689D','#DDA63A', '#C5192D', '#F1F1F1'))
 ```
 
 ##Map
@@ -101,7 +98,7 @@ Code from- https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggp
 p <- ggplot() +
     
         # Province polygons (use the new variable for the fill aesthetic)
-    geom_polygon(data = shapeSDG, aes(fill = Value_quantiles, 
+    geom_polygon(data = shapeSDG, aes(fill = Value_brks, 
                                       x = long, 
                                       y = lat, 
                                       group = group)) +
