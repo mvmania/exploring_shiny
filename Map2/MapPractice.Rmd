@@ -46,15 +46,15 @@ oo$Value <- as.numeric(as.character(oo$Value)) # Convert the 'Value' variable fr
 
 ## Make sure that the shape file is not broken!
 ```{r}
-#plot(oo)
+#plot(oo) # Editing out so that markdown will render
 ```
 If a map of Indonesia is returned, the polygons from the shapefile is still intact!
 
 ## What are the map boundaries?
 ```{r}
-bnds <- provIndo@bbox
-long <- (bnds[1,1]-bnds[1,2]/2) + bnds[1,1]
-lat <- (bnds[2,1]-bnds[2,2]/2) - bnds[2,1]
+bnds <- provIndo@bbox # The boundaries of the shapefile
+long <- (bnds[1,1]-bnds[1,2]/2) + bnds[1,1] # The central long of the map
+lat <- (bnds[2,1]-bnds[2,2]/2) - bnds[2,1] # The central lat of the map
 ```
 
 
@@ -71,7 +71,7 @@ pal <- colorBin(UNICEF, domain = oo$Value, bins = bins) # Define palette
 ```
 
 ## Generating the interactive map
-```{r}
+```{r, fig.width=10}
 labels <- sprintf( # Define what should come up in the pop-up
   "<strong>%s</strong><br/>%g &#37",
   oo$Province, oo$Value
