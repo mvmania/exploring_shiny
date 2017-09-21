@@ -1,4 +1,4 @@
-# First interactive map in shiny
+# Map with navigation bar
 
 ## Load Packages
 
@@ -10,8 +10,11 @@ require(sp)        # Used to merge shape file and data frame
 
 ## The Shape File
 
-Indonesia <- 
-        readOGR("/Users/User/Desktop/UNICEF/Maps/shape", "IDN_adm1") # Shapefile 
+# Path to use when playing
+ Indonesia <- readOGR(dsn = "/Users/User/Desktop/R Prac/UNICEF Project/exploring_shiny/InteractiveMap/shape", "IDN_adm1") # Shapefile 
+
+ # Path to use when publishing
+# Indonesia <- readOGR(dsn = ".", "IDN_adm1") # Shapefile 
 
 ## What are the map boundaries?
 
@@ -23,7 +26,11 @@ lat <- (bnds[2,1]-bnds[2,2]/2) - bnds[2,1] # The central latitude of the map
 
 ## The Province Data
 
-df = read.csv(file = "/Users/User/Desktop/R Prac/UNICEF Project/SDG.csv", sep=",") # SDG Data
+# Path to use when playing
+# df = read.csv(file = "/Users/User/Desktop/R Prac/UNICEF Project/exploring_shiny/InteractiveMap/SDG.csv", sep=",") # SDG Data
+
+# Path to use when publishing
+ df = read.csv(file = "SDG.csv", sep=",")
 
 SDG = df[,colSums(is.na(df)) != nrow(df)] # Remove empty columns
 
@@ -49,7 +56,7 @@ tags$head(tags$style(
 ui <- fluidPage(
         ui <- fluidPage(theme = "bootstrap.css",
                         # App title ----
-                        titlePanel("Choice"),
+                        titlePanel("Map of Selected Sustainable Development Goal Indicator"),
                         
                         # Sidebar layout with input and output definitions ----
                         sidebarLayout(
@@ -101,7 +108,7 @@ server <- function(input, output){
         
         #oo <- merge(Indonesia, SDG1(), by="ID_1") # Merge the shape file and the dataframe
         
-        UNICEF <- c('#00689D','#DDA63A', '#C5192D', '#F1F1F1') #Blue, Orange, Red, Grey
+        UNICEF <- c('#DDA63A','#DB8E3E', '#991D2E', '#00689D') #Blue, Orange, Red, Grey
         
         no_classes <- 4 # Number of data ranges
         
