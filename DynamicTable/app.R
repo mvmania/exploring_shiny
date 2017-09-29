@@ -104,15 +104,19 @@ server <- function(input, output){
                 
         # Generate data table 
         output$SDGtable1 <- DT::renderDataTable({
-                DT::datatable(oo, options = list(
-                        searchHighlight = TRUE, # Cause results from search filter to highlight
-                        columnDefs = list(list(targets = c(1,2), visible = FALSE)))) %>% # Make SDG and Indicator columns invisible
-                        formatStyle("Value", # Format around the value column
-                                    background = styleColorBar(range(oo$Value), '#1CABE2'), # Generate bars in value cells
-                                    backgroundSize = '98% 88%', # Maximum size bars can take in cells
-                                    backgroundRepeat = 'no-repeat', # Background unique to each cell in column
-                                    backgroundPosition = 'center', # Bars at center hight in cells
-                                    fontWeight = 'bold') #Make values bold so that they are easier to see with bars
+                DT::datatable(oo, 
+                              extensions = 'Buttons',
+                              options = list(
+                                      dom = 'Bfrtip',
+                                      buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                      searchHighlight = TRUE, # Cause results from search filter to highlight
+                                      columnDefs = list(list(targets = c(1,2), visible = FALSE)))) %>% # Make SDG and Indicator columns invisible
+                                      formatStyle("Value", # Format around the value column
+                                                background = styleColorBar(range(oo$Value), '#1CABE2'), # Generate bars in value cells
+                                                backgroundSize = '98% 88%', # Maximum size bars can take in cells
+                                                backgroundRepeat = 'no-repeat', # Background unique to each cell in column
+                                                backgroundPosition = 'center', # Bars at center hight in cells
+                                                fontWeight = 'bold') #Make values bold so that they are easier to see with bars
         })
         })
         
