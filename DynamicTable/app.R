@@ -104,7 +104,6 @@ server <- function(input, output){
         output$SDGtable1 <- DT::renderDataTable({
                 DT::datatable(oo) %>%
                    formatStyle("Value", 
-                               target = "row",
                                backgroundColor = styleInterval(
                                        bins,
                                        UNICEF))
