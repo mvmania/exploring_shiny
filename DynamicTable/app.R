@@ -73,9 +73,11 @@ server <- function(input, output){
         
         # Generate the checkbox for Indicators
         output$checkbox1 <- renderUI({
-                choice <-  unique(SDGdf[SDGdf$SDG %in% input$select1, "Indicator"])
-                checkboxGroupInput("checkbox1","Select Indicator:", choices = choice, 
-                                   selected = choice[1])
+                
+                choice <-  unique(SDGdf[SDGdf$SDG %in% input$select1, "Indicator"]) # Make a list of unique indicators for the selected SDG
+                
+                checkboxGroupInput("checkbox1","Select Indicator:", choices = choice, # Make a checkbox list of all of the Indicators
+                                   selected = choice[1]) # The UI should preselect the first indicator on the list
         })
         
         # Generate data frame
@@ -89,27 +91,28 @@ server <- function(input, output){
         
         observe({
                 #Generate colour code and breaks
-                UNICEF <- c('#DDA63A','#DB8E3E', '#991D2E', '#00689D', '#000000') #Gold, Orange, Red, Blue
+                UNICEF <- c('#DDA63A','#DB8E3E', '#991D2E', '#00689D', '#000000') #Gold, Orange, Red, Blue, other had to 
                 
-                no_classes <- 5 # Number of data ranges
+                no_classes <- 4 # Number of data ranges
                 
                 oo <- df() # Variable for reactive data
                 
                 oo$Value <- as.numeric(as.character(oo$Value)) # Coerce Value into numeric data type
                 
                 bins <- quantile(oo$Value, 
-                                 probs = seq(0, 1, length.out = no_classes -1), na.rm = TRUE) # Generate quantile ranges to map
+                                 probs = seq(0, 1, length.out = no_classes), na.rm = TRUE) # Generate quantile ranges for bars in table
                 
         # Generate data table 
         output$SDGtable1 <- DT::renderDataTable({
                 DT::datatable(oo, options = list(
-                        searchHighlight = TRUE,
-                        columnDefs = list(list(targets = c(1,2), visible = FALSE)))) %>%
-                        formatStyle("Value",
-                                    background = styleColorBar(range(oo$Value), '#1CABE2'),
-                                    backgroundSize = '98% 88%',
-                                    backgroundRepeat = 'no-repeat',
-                                    backgroundPosition = 'center')
+                        searchHighlight = TRUE, # Cause results from search filter to highlight
+                        columnDefs = list(list(targets = c(1,2), visible = FALSE)))) %>% # Make SDG and Indicator columns invisible
+                        formatStyle("Value", # Format around the value column
+                                    background = styleColorBar(range(oo$Value), '#1CABE2'), # Generate bars in value cells
+                                    backgroundSize = '98% 88%', # Maximum size bars can take in cells
+                                    backgroundRepeat = 'no-repeat', # Background unique to each cell in column
+                                    backgroundPosition = 'center', # Bars at center hight in cells
+                                    fontWeight = 'bold') #Make values bold so that they are easier to see with bars
         })
         })
         
