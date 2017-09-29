@@ -103,7 +103,7 @@ server <- function(input, output){
         # Generate data table 
         output$SDGtable1 <- DT::renderDataTable({
                 DT::datatable(oo, options = list(
-                        searchHighlight = TRUE, search = list(search = 'da'),
+                        searchHighlight = TRUE,
                         columnDefs = list(list(targets = c(1,2), visible = FALSE)))) %>%
                         formatStyle("Value",
                                     background = styleColorBar(range(oo$Value), '#1CABE2'),
