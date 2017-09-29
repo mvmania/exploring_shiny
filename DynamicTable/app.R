@@ -1,3 +1,5 @@
+# National Data Table
+
 # The packages
 library(shiny)
 library(DT)
@@ -7,9 +9,13 @@ library(dplyr)
 # Data Editing 
 #SDG Data
 
-df = read.csv(file = "/Users/User/Desktop/R Prac/UNICEF Project/exploring_shiny/DynamicTable/SDG.csv", sep=",")
+# Path to use when editing 
+#df = read.csv(file = "/Users/User/Desktop/R Prac/UNICEF Project/exploring_shiny/DynamicTableApp/SDG.csv", sep=",")
 
-#Remove empty columns from dataset 
+# Path to use when publishing
+df = read.csv(file = "SDG.csv", sep=",")
+
+# Remove empty columns from dataset 
 SDG = df[,colSums(is.na(df)) != nrow(df)]
 
 SDGdf1 <- SDG[1:4112,] %>%
@@ -32,8 +38,19 @@ ui <- fluidPage(theme = "bootstrap.css",
                 # Sidebar panel for inputs ----
                 sidebarPanel(
                         # SDG Input
-                        selectInput("select1", "Select Sustainable Development Goal:", choices = c(
-                                "Goal 1: No Poverty" = 1, "Goal 2: Zero Hunger" = 2, "Goal 3: Good Health and Well-Being" = 3, "Goal 4 : Quality Education" = 4, "Goal 5: Gender Equality" = 5, "Goal 6: Clean Water and Sanitation" = 6, "Goal 8: Decent Work and Economic Growth" = 8, "Goal 13: Climate Action" = 13, "Goal 16: Peace Justice and Strong Institutions" = 16), selected = "Goal 1: No Poverty"),
+                        selectInput("select1", 
+                                    "Select Sustainable Development Goal:", 
+                                    choices = c(
+                                            "Goal 1: No Poverty" = 1, 
+                                            "Goal 2: Zero Hunger" = 2, 
+                                            "Goal 3: Good Health and Well-Being" = 3, 
+                                            "Goal 4 : Quality Education" = 4, 
+                                            "Goal 5: Gender Equality" = 5, 
+                                            "Goal 6: Clean Water and Sanitation" = 6, 
+                                            "Goal 8: Decent Work and Economic Growth" = 8, 
+                                            "Goal 13: Climate Action" = 13, 
+                                            "Goal 16: Peace Justice and Strong Institutions" = 16), 
+                                    selected = "Goal 1: No Poverty"),
                         
                         #Checkbox output 
                         uiOutput("checkbox1"),
@@ -70,9 +87,24 @@ server <- function(input, output){
                 
         })
         
+        observe({
+                #Generate colour code and breaks
+                UNICEF <- c('#DDA63A','#DB8E3E', '#991D2E', '#00689D') #Gold, Orange, Red, Blue
+                
+                no_classes <- 4 # Number of data ranges
+                
+                oo <- df() # Variable for reactive data
+                
+                oo$Value <- as.numeric(as.character(oo$Value)) # Coerce Value into numeric data type
+                
+                bins <- quantile(oo$Value, 
+                                 probs = seq(0, 1, length.out = no_classes + 1), na.rm = TRUE) # Generate quantile ranges to map
+                
         # Generate data table 
         output$SDGtable1 <- DT::renderDataTable({
-                DT::datatable(df())
+                DT::datatable(oo) #%>%
+                                   #   formatStyle("Value", backgroundColor = styleColorBar("Value", bins, UNICEF))
+        })
         })
         
         # Downloadable csv of selected dataset ----
