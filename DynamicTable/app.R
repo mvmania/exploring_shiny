@@ -102,11 +102,13 @@ server <- function(input, output){
                 
         # Generate data table 
         output$SDGtable1 <- DT::renderDataTable({
-                DT::datatable(oo) %>%
-                   formatStyle("Value", 
-                               backgroundColor = styleInterval(
-                                       bins,
-                                       UNICEF))
+                DT::datatable(oo, options = list(
+                        columnDefs = list(list(targets = c(1,2), visible = FALSE)))) %>%
+                        formatStyle("Value",
+                                    background = styleColorBar(range(oo$Value), '#1CABE2'),
+                                    backgroundSize = '98% 88%',
+                                    backgroundRepeat = 'no-repeat',
+                                    backgroundPosition = 'center')
         })
         })
         
