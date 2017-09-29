@@ -89,21 +89,25 @@ server <- function(input, output){
         
         observe({
                 #Generate colour code and breaks
-                UNICEF <- c('#DDA63A','#DB8E3E', '#991D2E', '#00689D') #Gold, Orange, Red, Blue
+                UNICEF <- c('#DDA63A','#DB8E3E', '#991D2E', '#00689D', '#000000') #Gold, Orange, Red, Blue
                 
-                no_classes <- 4 # Number of data ranges
+                no_classes <- 5 # Number of data ranges
                 
                 oo <- df() # Variable for reactive data
                 
                 oo$Value <- as.numeric(as.character(oo$Value)) # Coerce Value into numeric data type
                 
                 bins <- quantile(oo$Value, 
-                                 probs = seq(0, 1, length.out = no_classes + 1), na.rm = TRUE) # Generate quantile ranges to map
+                                 probs = seq(0, 1, length.out = no_classes -1), na.rm = TRUE) # Generate quantile ranges to map
                 
         # Generate data table 
         output$SDGtable1 <- DT::renderDataTable({
-                DT::datatable(oo) #%>%
-                                   #   formatStyle("Value", backgroundColor = styleColorBar("Value", bins, UNICEF))
+                DT::datatable(oo) %>%
+                   formatStyle("Value", 
+                               target = "row",
+                               backgroundColor = styleInterval(
+                                       bins,
+                                       UNICEF))
         })
         })
         
