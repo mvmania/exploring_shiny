@@ -105,10 +105,11 @@ server <- function(input, output){
         # Generate data table 
         output$SDGtable1 <- DT::renderDataTable({
                 DT::datatable(oo, 
-                              extensions = 'Buttons',
+                              extensions = 'ColReorder','Buttons', 
                               options = list(
                                       dom = 'Bfrtip',
-                                      buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                      colReorder = TRUE,
+                                      buttons = c('copy', 'csv', 'excel', 'print'),
                                       searchHighlight = TRUE, # Cause results from search filter to highlight
                                       columnDefs = list(list(targets = c(1,2), visible = FALSE)))) %>% # Make SDG and Indicator columns invisible
                                       formatStyle("Value", # Format around the value column
