@@ -105,13 +105,24 @@ server <- function(input, output){
         # Generate data table 
         output$SDGtable1 <- DT::renderDataTable({
                 DT::datatable(oo, 
-                              extensions = c('ColReorder', 'Buttons'),
+                              extensions = c( # Extensions allow for different things to occur in the UI, has to be matched with compatible 'options' in order to appear 
+                                      'ColReorder', # Allows col to be reordered 
+                                      'Buttons', # Allows buttons
+                                      'Scroller'), # Allows scroller 
                               options = list(
-                                      dom = 'Bfrtip',
-                                      colReorder = TRUE,
-                                      buttons = c('copy', 'csv', 'excel', 'print','colvis'), # 'colvis' generates button that allows the column to be selected 
+                                      dom = 'Bfrtip', # Denotes where things appear in the UI, must have for buttons to appear! 
+                                      colReorder = TRUE, # Give user ability to reorder the col 
+                                      buttons = c('copy', # Copy the current table 
+                                                  'pdf', # Export pdf of table, does not work with bars in table
+                                                  'csv', # Export a CSV of the total table, stopped working when bars were added to the table
+                                                  'excel', # Export an excel spreadsheet of the total table, does not show up!
+                                                  'print', # Print table
+                                                  'colvis'), # Generates button that allows the columns to appear to be selected or unselected- all columns appear in download! 
                                       searchHighlight = TRUE, # Cause results from search filter to highlight
-                                      columnDefs = list(list(targets = c(1,2), visible = FALSE)))) %>% # Make SDG and Indicator columns invisible
+                                      deferRender = FALSE, # For use with large data sets to determine when an UI action is rendered 
+                                      scrollY = 475, # Verticle scrolling, numeric value determines height of table- 475 displays 13 row with the current CSS  
+                                      scroller = TRUE, # Should the scroller appear
+                                      columnDefs = list(list(targets = c(1,2), visible = FALSE)))) %>% # Make SDG and Indicator columns (cols 1 and 2) invisible, could not get to work with c("SDG", "Indicator") or oo$Indicator
                                       formatStyle("Value", # Format around the value column
                                                 background = styleColorBar(range(oo$Value), '#1CABE2'), # Generate bars in value cells
                                                 backgroundSize = '98% 88%', # Maximum size bars can take in cells
