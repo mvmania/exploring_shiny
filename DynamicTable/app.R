@@ -1,10 +1,10 @@
 # National Data Table
 
 # The packages
-library(shiny)
-library(DT)
-library(ggplot2)
-library(dplyr)
+library(shiny)          # Generates shiny app
+library(DT)             # Generates dynamic tables
+library(ggplot2)        # Geberates plots
+library(dplyr)          # Data manipulation 
 
 # Data Editing 
 #SDG Data
@@ -18,29 +18,29 @@ df = read.csv(file = "SDG.csv", sep=",")
 # Remove empty columns from dataset 
 SDG = df[,colSums(is.na(df)) != nrow(df)]
 
-SDGdf1 <- SDG[1:4112,] %>%
+SDGdf1 <- SDG[1:4112,] %>% # Create a new variable that describes if data National or Provincial level data
         mutate(Level = ifelse(Province == "All Indonesia", "National", 
-                              "Provincial"))
-SDGdf2 <- SDGdf1 %>%
+                              "Provincial")) 
+SDGdf2 <- SDGdf1 %>% # Subset the National data only
         filter(Level == "National")
 
-SDGdf <- SDGdf2 %>%
+SDGdf <- SDGdf2 %>% # Select the variables that apply to the National data 
         select("SDG" = "SDG.Goal", "Indicator" = "Indicator", "Value" = "Value","Gender" = "Gender..All.Male.Female.", "Geography" = "Geography..All.Urban.Rural.", "Disability" = "Disability..All.With.Without.", "WealthQuintile" = "Wealth.Quintile..All.Poorest.Second.Middle.Fourth.Richest.", "Education" = "Educational.attainment.of.household.head", "Age" = "Age.Range..i.e..0.24.M..15.60.Y.", "Year" = "Year", "Source" = "Source")
 
 # The app
-ui <- fluidPage(theme = "bootstrap.css",
+ui <- fluidPage(theme = "bootstrap.css", #Styling CSS
         # App title ----
         titlePanel("Downloadable National Data"),
         
-        # Sidebar layout with input and output definitions ----
+        # Sidebar layout with input and output definitions
         sidebarLayout(
                 
-                # Sidebar panel for inputs ----
+                # Sidebar panel for inputs 
                 sidebarPanel(
                         # SDG Input
-                        selectInput("select1", 
-                                    "Select Sustainable Development Goal:", 
-                                    choices = c(
+                        selectInput("select1", # Name of input
+                                    "Select Sustainable Development Goal:", # Label for the SDG dropdown 
+                                    choices = c( # The options that appear in the dropdown 
                                             "Goal 1: No Poverty" = 1, 
                                             "Goal 2: Zero Hunger" = 2, 
                                             "Goal 3: Good Health and Well-Being" = 3, 
@@ -50,7 +50,7 @@ ui <- fluidPage(theme = "bootstrap.css",
                                             "Goal 8: Decent Work and Economic Growth" = 8, 
                                             "Goal 13: Climate Action" = 13, 
                                             "Goal 16: Peace Justice and Strong Institutions" = 16), 
-                                    selected = "Goal 1: No Poverty"),
+                                    selected = "Goal 1: No Poverty"), # The option initially selected in the UI
                         
                         #Checkbox output 
                         uiOutput("checkbox1"),
