@@ -1,0 +1,177 @@
+---
+title: "National data visualization options"
+author: "Millie"
+date: "06 October 2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+## Load Packages
+```{r}
+library(ggplot2)
+library(ggthemes)
+library(dplyr)
+library(treemapify)
+library(reshape2)
+```
+
+
+## Load and modify data
+```{r}
+# SDG Data
+df <- read.csv(file = "/Users/User/Desktop/R Prac/UNICEF Project/exploring_shiny/SDG_Millie_vb_edit.csv", sep=",")
+# Remove empty columns from dataset 
+SDG = df[,colSums(is.na(df)) != nrow(df)]
+# Generate a column to Distinguis nation and provincial data
+SDGdf1 <- SDG[1:4112,] %>%
+        mutate(Level = ifelse(Province == "All Indonesia", 
+                              "National", 
+                              "Provincial"))%>%
+        mutate(Quintile = ifelse(
+                Wealth.Quintile..All.Poorest.Second.Middle.Fourth.Richest. == "Q5 (wealthiest)", "Q5", 
+                ifelse(Wealth.Quintile..All.Poorest.Second.Middle.Fourth.Richest. == "Q1 (poorest)", "Q1", 
+                ifelse(Wealth.Quintile..All.Poorest.Second.Middle.Fourth.Richest. == "Q2", "Q2", 
+                ifelse(Wealth.Quintile..All.Poorest.Second.Middle.Fourth.Richest. == "Q3", "Q3", 
+                ifelse(Wealth.Quintile..All.Poorest.Second.Middle.Fourth.Richest. == "Q4", "Q4", "All"))))))%>%
+        mutate(Ed = ifelse(Educational.Attainment.of.Household.Head == "No school", "None", 
+                ifelse(Educational.Attainment.of.Household.Head == "Incomplete primary school (SD)/Islamic primary school (MI)", "Incomplete Primary",
+                ifelse(Educational.Attainment.of.Household.Head == "Incomplete primary school", "Incomplete Primary",
+                ifelse(Educational.Attainment.of.Household.Head == "Graduated primary school", "Graduated Primary",
+                ifelse(Educational.Attainment.of.Household.Head == "Graduated primary school (SD/MI)", "Graduated Primary", 
+                ifelse(Educational.Attainment.of.Household.Head == "Some secondary school", "Some Secondary",
+                ifelse(Educational.Attainment.of.Household.Head == "Graduated junior secondary school (SMP/MTS)", "Graduated Junior Secondary",
+                ifelse(Educational.Attainment.of.Household.Head == "Graduated from secondary school", "Graduated Secondary", 
+                ifelse(Educational.Attainment.of.Household.Head == "Graduated senior secondary school (SMA/MA)", "Graduated Senior Secondary",     
+                ifelse(Educational.Attainment.of.Household.Head == "More than secondary school", "More than Secondary",
+                ifelse(Educational.Attainment.of.Household.Head == "Graduated university (D1-D3/PT)", "Graduated University", "All"))))))))))))
+
+# Select only the national data 
+SDGdf2 <- SDGdf1 %>%
+        filter(Level == "National")
+
+# Select specific columns
+SDGdf <- SDGdf2 %>%
+        select("SDG" = "SDG.Goal", 
+               "Indicator" = "Indicator", 
+               "Value" = "Value",
+               "Gender" = "Gender..All.Male.Female.", 
+               "Geography" = "Geography..All.Urban.Rural.", 
+               "Disability" = "Disability..All.With.Without.", 
+               "WealthQuintile" = "Quintile", 
+               "Education" = "Ed", 
+               "Age" = "Age.Range..i.e..0.24.M..15.60.Y.", 
+               "Year" = "Year", 
+               "Source" = "Source")
+
+SDG1 <- SDGdf %>%
+        mutate(Population = ifelse(Gender == "All" & 
+                                           Geography =="All" & 
+                                           Disability == "All" & 
+                                           WealthQuintile == "All" & 
+                                           Education == "All", 
+                                   "Total Population", 
+                                   "All"))
+
+SDG2 <- melt(SDG1, id=c("SDG", "Indicator", "Age", "Year", "Source", "Value"))
+
+SDG3 <- SDG2 %>%
+        filter(value != "All")
+```
+
+
+##Tree map
+
+Examples- https://cran.r-project.org/web/packages/treemapify/vignettes/introduction-to-treemapify.html
+
+```{r}
+SDG4 <- SDG3 %>%
+        filter(Indicator == "Neonatal mortality rate")
+
+SDG4$Value <- as.numeric(as.character(SDG4$Value)) # Coerce Value into numeric data type
+ 
+# Plot
+treeMapPlot <- ggplot(SDG4, aes(area = Value, fill = variable, label = c(value), subgroup = variable)) +
+                  geom_treemap(stat = "identity") +
+                  #geom_text(data = SDG4, aes(label=Value)) +
+                  scale_x_continuous(expand = c(0, 0)) +
+                  scale_y_continuous(expand = c(0, 0)) +
+                  scale_fill_manual(values = rev(c('#3F7E44', '#DDA63A', '#991D2E', '#00689D', '#1CABE2'))) +
+                  geom_treemap_text(fontface = "italic", colour = "white", place = "centre",
+                    reflow=T)+
+                  geom_treemap_subgroup_border()
+treeMapPlot + theme(legend.title=element_blank(),
+                    plot.background = element_rect(fill = "#F1F1F1"),
+                    panel.background = element_rect(fill = "#F1F1F1"),
+                    legend.background = element_rect(fill = "#F1F1F1"))
+
+```
+
+##Bar 1
+```{r, fig.height= 7}
+p <- ggplot(data = SDG4, aes(x = value, y = Value, fill = variable)) +  
+        geom_col() + 
+        scale_fill_manual(values = rev(c('#3F7E44', '#DDA63A', '#991D2E', '#00689D', '#1CABE2'))) +
+        labs(x = "Variable", y= "Value") +
+        theme(legend.title=element_blank(),
+              legend.text = element_text(size = 7),
+              axis.text.x=element_text(angle=90, size = 9)
+              #axis.title.x=element_blank()
+              ) +
+        theme_hc() +
+        scale_x_discrete(limits= SDG4$value) +
+        geom_text(aes(label = Value), size = 3, fontface = 2, 
+           hjust = 0.5, vjust = 2, col = "white")
+
+p + theme(legend.title=element_blank(),
+          axis.ticks.y = element_blank(),
+          plot.background = element_rect(fill = "#F1F1F1"),
+          panel.background = element_rect(fill = "#F1F1F1"),
+          legend.background = element_rect(fill = "#F1F1F1"))
+```
+
+##Bar 2
+```{r, fig.height= 7}
+p <- ggplot(data = SDG4, aes(x = reorder(value, Value), y = Value, fill = variable)) +  
+        geom_col() +
+        scale_fill_manual(values = rev(c('#3F7E44', '#DDA63A', '#991D2E', '#00689D', '#1CABE2'))) + 
+        labs(x = "Variable", y= "Value") +
+        coord_flip() + 
+        theme_hc()+
+        geom_text(aes(label = Value), size = 3, fontface = 2, hjust = 2, col = "white")
+
+p + theme(legend.title=element_blank(),
+          axis.ticks.y = element_blank(),
+          plot.background = element_rect(fill = "#F1F1F1"),
+          panel.background = element_rect(fill = "#F1F1F1"),
+          legend.background = element_rect(fill = "#F1F1F1"))
+```
+
+
+##Dot Plot
+```{r}
+library(ggplot2)
+library(scales)
+theme_set(theme_classic())
+
+# Plot
+p <- ggplot(SDG4, aes(x = reorder(value, Value), y = Value, group = variable)) + 
+        geom_point(aes(col= variable), size=6, alpha = 1) + 
+        scale_colour_manual(values = rev(c('#3F7E44', '#DDA63A', '#991D2E', '#00689D', '#1CABE2'))) +   # Draw points
+        geom_segment(aes(x=value, 
+                   xend=value, 
+                   y=min(0), 
+                   yend=max(Value)), 
+               size=0.1) +   # Draw dashed lines
+        labs(x = "Variable", y= "Value") +
+        geom_text(aes(label = Value), size = 3, fontface = 2, col = "white")+
+        theme()+
+        coord_flip()
+
+p + theme(legend.title=element_blank(),
+          axis.ticks.y = element_blank(),
+          plot.background = element_rect(fill = "#F1F1F1"),
+          panel.background = element_rect(fill = "#F1F1F1"),
+          legend.background = element_rect(fill = "#F1F1F1"))
+```
+
