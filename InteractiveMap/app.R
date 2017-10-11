@@ -1,20 +1,19 @@
-# Map with navigation bar
+# First interactive map in shiny
 
 ## Load Packages
-
+library(shiny)     # Make the app 
+library(leaflet)   # Interactive maps with pop-ups   
 library(rgdal)     # R wrapper around GDAL/OGR
-library(dplyr)     # Data manipulation  
-library(shiny)     # Make the app     
-library(leaflet)   # Interactive maps with pop-ups          
+library(dplyr)     # Data manipulation 
 require(sp)        # Used to merge shape file and data frame
 
 ## The Shape File
 
 # Path to use when playing
- Indonesia <- readOGR(dsn = "/Users/User/Desktop/R Prac/UNICEF Project/exploring_shiny/InteractiveMap/shape", "IDN_adm1") # Shapefile 
+# Indonesia <- readOGR(dsn = "/Users/User/Desktop/R Prac/UNICEF Project//exploring_shiny/InteractiveMap", "IDN_adm1") # Shapefile 
 
  # Path to use when publishing
-# Indonesia <- readOGR(dsn = ".", "IDN_adm1") # Shapefile 
+Indonesia <- readOGR(".", "IDN_adm1") # Shapefile 
 
 ## What are the map boundaries?
 
@@ -27,10 +26,10 @@ lat <- (bnds[2,1]-bnds[2,2]/2) - bnds[2,1] # The central latitude of the map
 ## The Province Data
 
 # Path to use when playing
-# df = read.csv(file = "/Users/User/Desktop/R Prac/UNICEF Project/exploring_shiny/InteractiveMap/SDG.csv", sep=",") # SDG Data
+ #df = read.csv(file = "/Users/User/Desktop/R Prac/UNICEF Project/exploring_shiny/InteractiveMap/SDG.csv", sep=",") # SDG Data
 
 # Path to use when publishing
- df = read.csv(file = "SDG.csv", sep=",")
+df = read.csv(file = "SDG.csv", sep=",")
 
 SDG = df[,colSums(is.na(df)) != nrow(df)] # Remove empty columns
 
@@ -45,13 +44,6 @@ idName <- SDGdf %>% #Bind province names from the dataset to their numeric equiv
 
 idName1 <- idName%>% # In previous iteration, numbers were from 0-33, now they are 1-34 so add 1 to each of the numbers to match
         mutate(ID_1 = id + 1)
-
-# Add a little CSS to make the map background pure white
-tags$head(tags$style(
-        "#showcase-code-position-toggle, #showcase-sxs-code { display: none; }
-        .floater { background-color: white; padding: 8px; opacity: 0.7; border-radius: 6px; box-shadow: 0 0 15px rgba(0,0,0,0.2); }"
-)
-)
 
 ui <- fluidPage(
         ui <- fluidPage(theme = "bootstrap.css",
@@ -97,7 +89,7 @@ server <- function(input, output){
                         filter(idName1$SDG %in% input$select1, #Subset selected SDG from data frame
                                idName1$Indicator %in% input$select2 # Subset selected Indicators from the resulting data frame
                         )
-                provIndo <- merge(Indonesia, SDG1, by="ID_1") # Merge the shape file and the dataframe
+                provIndo <- sp::merge(Indonesia, SDG1, by="ID_1") # Merge the shape file and the dataframe
                 
                 provIndo
                 })
@@ -108,7 +100,7 @@ server <- function(input, output){
         
         #oo <- merge(Indonesia, SDG1(), by="ID_1") # Merge the shape file and the dataframe
         
-        UNICEF <- c('#DDA63A','#DB8E3E', '#991D2E', '#00689D') #Blue, Orange, Red, Grey
+        UNICEF <- c('#DDA63A','#DB8E3E', '#991D2E', '#00689D') #Gold, Orange, Red, Blue
         
         no_classes <- 4 # Number of data ranges
         
