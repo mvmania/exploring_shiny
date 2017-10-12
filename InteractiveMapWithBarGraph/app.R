@@ -13,8 +13,6 @@ library(plotly)
 
 ## The Shape File
 
-# Path to use when playing
-#Indonesia <- readOGR(dsn = "/Users/User/Desktop/R Prac/UNICEF Project/exploring_shiny/InteractiveMapWithBarGraph/IDN_adm1", "IDN_adm1") # Shapefile 
 # Path to use when publishing
 Indonesia <- readOGR(".", "IDN_adm1") # Shapefile
 
@@ -22,17 +20,17 @@ Indonesia <- readOGR(".", "IDN_adm1") # Shapefile
 
 bnds <- Indonesia@bbox # The boundaries of the shapefile
 
-long <- (bnds[1,1]-bnds[1,2]/2) + bnds[1,1] # The central longitude of the map
+long <- (bnds[1,1]-bnds[1,2]/2) + bnds[1,1] - 1.5 # The central longitude of the map
 
 lat <- (bnds[2,1]-bnds[2,2]/2) - bnds[2,1] # The central latitude of the map
 
 ## The Province Data
 
 # Path to use when playing
- df = read.csv(file = "/Users/User/Desktop/R Prac/UNICEF Project/exploring_shiny/InteractiveMapWithBarGraph/SDG.csv", sep=",") # SDG Data
+ # df = read.csv(file = "/Users/User/Desktop/R Prac/UNICEF Project/exploring_shiny/InteractiveMapWithBarGraph/SDG.csv", sep=",") # SDG Data
 
 # Path to use when publishing
-#df = read.csv(file = "SDG.csv", sep=",")
+df = read.csv(file = "SDG.csv", sep=",")
 
 SDG = df[,colSums(is.na(df)) != nrow(df)] # Remove empty columns
 
@@ -45,7 +43,7 @@ ui <- navbarPage(theme = "bootstrap.css",
                 # Tab panels for inputs ----
                 tabPanel(
                          # SDG Input
-                         selectInput("select1", "", 
+                         selectInput("select1", "Select a Sustainable Development Goal:", 
                                      choices = c("Goal 1: No Poverty" = 1, 
                                                  "Goal 2: Zero Hunger" = 2, 
                                                  "Goal 3: Good Health and Well-Being" = 3, 
@@ -78,7 +76,7 @@ server <- function(input, output){
         output$select2 <- renderUI({
                 choice <-  unique(SDG[SDG$SDG.Goal %in% input$select1, "Indicator"]) # Subset Indicator for selected SDG
                 selectInput("select2", # Reactive input name
-                            "", # No label for the tab panel
+                            "Select an Indicator:", # No label for the tab panel
                             choices = choice, # Indicator options for the selected SDG
                             selected = choice[1]) # Select the first Indicator for the selected SDG
         })
@@ -90,14 +88,9 @@ server <- function(input, output){
                                SDG$Indicator %in% input$select2 # Subset selected Indicators from the resulting data frame
                         )
                 
-                SDG1
+                SDG1 # Print the resulting dataframe 
         })
-        
-        # Merge the shape file and the dataframe
-        #oo@data <- Indonesia@data %>%
-        # left_join(Indonesia@data, SDG1(), by=c("ID_1"))
-        
-        #oo <- merge(Indonesia, SDG1(), by="ID_1") # Merge the shape file and the dataframe
+
         
         UNICEF <- c('#DDA63A','#DB8E3E', '#991D2E', '#00689D') #Gold, Orange, Red, Blue
         
@@ -184,7 +177,7 @@ server <- function(input, output){
                                 setView( # Define map boundaries
                                         lng = long, # Center on defined longitude
                                         lat = lat, # Center on defined latitude 
-                                        zoom = 4) # Zoom in how close
+                                        zoom = 4.7) # Zoom in how close
                 })
         })         
                 
