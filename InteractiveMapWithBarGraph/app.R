@@ -36,24 +36,12 @@ lat <- (bnds[2,1]-bnds[2,2]/2) - bnds[2,1] # The central latitude of the map
 
 SDG = df[,colSums(is.na(df)) != nrow(df)] # Remove empty columns
 
-SDGp <- SDG %>% # Select the variables that apply to the provinces 
-        select("SDG" = "SDG.Goal", "Indicator" = "Indicator", "Value" = "Value", "Province" = "Province") # Rename the variables to make them easier to work with and select the ones that apply to our needs
-
-SDGdf <- SDGp %>%
-        filter(Province != "All Indonesia") # Remove all national level data rows
-
-idName <- SDGdf %>% #Bind province names from the dataset to their numeric equivalents in the shapefile- ID_1
-        mutate(id = ifelse(Province == "Aceh", 0, ifelse(Province == "Bali", 1, ifelse(Province == "Banten", 3, ifelse(Province == "Bengkulu", 4, ifelse(Province == "DI Yogyakarta", 33, ifelse(Province == "DKI Jakarta", 7, ifelse(Province == "Gorontalo", 5, ifelse(Province == "Jambi", 8, ifelse(Province == "Jawa Barat", 9, ifelse(Province == "Jawa Tengah", 10, ifelse(Province == "Jawa Timur", 11, ifelse(Province == "Kalimantan Barat", 12, ifelse(Province == "Kalimantan Selatan", 13, ifelse(Province == "Kalimantan Tengah", 14, ifelse(Province == "Kalimantan Timur", 15, ifelse(Province == "Kalimantan Utara", 16, ifelse(Province == "Kepulauan Bangka Belitung", 2,  ifelse(Province == "Kepulauan Riau", 17, ifelse(Province == "Lampung", 18, ifelse(Province == "Maluku", 20, ifelse(Province == "Maluku Utara", 19, ifelse(Province == "Nusa Tenggara Barat", 21,  ifelse(Province == "Nusa Tenggara Timur", 22, ifelse(Province == "Papua", 23, ifelse(Province == "Papua Barat", 6, ifelse(Province == "Riau", 24, ifelse(Province == "Sulawesi Barat", 25,  ifelse(Province == "Sulawesi Selatan", 26, ifelse(Province == "Sulawesi Tengah", 27, ifelse(Province == "Sulawesi Tenggara", 28, ifelse(Province == "Sulawesi Utara", 29, ifelse(Province == "Sumatera Barat", 30, ifelse(Province == "Sumatera Selatan", 31, 32)))))))))))))))))))))))))))))))))) # "Sumatera Utara" left out of ifelse statement!
-
-idName1 <- idName%>% # In previous iteration, numbers were from 0-33, now they are 1-34 so add 1 to each of the numbers to match
-        mutate(ID_1 = id + 1)
-
 # The App
 
 
 ui <- navbarPage(theme = "bootstrap.css",
                 # Title       
-                titlePanel("Map of Selected Sustainable Development Goal Indicator"),
+                titlePanel(""),
                 # Tab panels for inputs ----
                 tabPanel(
                          # SDG Input
@@ -86,12 +74,9 @@ ui <- navbarPage(theme = "bootstrap.css",
 
 server <- function(input, output){
         
-        # Put country shapedata in temporary var
-        oo <- Indonesia
-        
         # Generate reactive list of Indicators for the selected SDG               
         output$select2 <- renderUI({
-                choice <-  unique(idName1[idName1$SDG %in% input$select1, "Indicator"]) # Subset Indicator for selected SDG
+                choice <-  unique(SDG[SDG$SDG.Goal %in% input$select1, "Indicator"]) # Subset Indicator for selected SDG
                 selectInput("select2", # Reactive input name
                             "", # No label for the tab panel
                             choices = choice, # Indicator options for the selected SDG
@@ -100,9 +85,9 @@ server <- function(input, output){
      
         # Generate reactive data frame with selected SDG and Indicator
         SDG1 <-reactive({
-                SDG1 <- idName1 %>% 
-                        filter(idName1$SDG %in% input$select1, #Subset selected SDG from data frame
-                               idName1$Indicator %in% input$select2 # Subset selected Indicators from the resulting data frame
+                SDG1 <- SDG %>% 
+                        filter(SDG$SDG.Goal %in% input$select1, #Subset selected SDG from data frame
+                               SDG$Indicator %in% input$select2 # Subset selected Indicators from the resulting data frame
                         )
                 
                 SDG1
@@ -122,7 +107,19 @@ server <- function(input, output){
                 
                 SDGoo <- SDG1()
                 
-                oo <- merge(Indonesia, SDGoo, by="ID_1") # Merge the shape file and the dataframe
+                SDGp <- SDGoo %>% # Select the variables that apply to the provinces 
+                        select("SDG" = "SDG.Goal", "Indicator" = "Indicator", "Value" = "Value", "Province" = "Province") # Rename the variables to make them easier to work with and select the ones that apply to our needs
+                
+                SDGdf <- SDGp %>%
+                        filter(Province != "All Indonesia") # Remove all national level data rows
+                
+                idName <- SDGdf %>% #Bind province names from the dataset to their numeric equivalents in the shapefile- ID_1
+                        mutate(id = ifelse(Province == "Aceh", 0, ifelse(Province == "Bali", 1, ifelse(Province == "Banten", 3, ifelse(Province == "Bengkulu", 4, ifelse(Province == "DI Yogyakarta", 33, ifelse(Province == "DKI Jakarta", 7, ifelse(Province == "Gorontalo", 5, ifelse(Province == "Jambi", 8, ifelse(Province == "Jawa Barat", 9, ifelse(Province == "Jawa Tengah", 10, ifelse(Province == "Jawa Timur", 11, ifelse(Province == "Kalimantan Barat", 12, ifelse(Province == "Kalimantan Selatan", 13, ifelse(Province == "Kalimantan Tengah", 14, ifelse(Province == "Kalimantan Timur", 15, ifelse(Province == "Kalimantan Utara", 16, ifelse(Province == "Kepulauan Bangka Belitung", 2,  ifelse(Province == "Kepulauan Riau", 17, ifelse(Province == "Lampung", 18, ifelse(Province == "Maluku", 20, ifelse(Province == "Maluku Utara", 19, ifelse(Province == "Nusa Tenggara Barat", 21,  ifelse(Province == "Nusa Tenggara Timur", 22, ifelse(Province == "Papua", 23, ifelse(Province == "Papua Barat", 6, ifelse(Province == "Riau", 24, ifelse(Province == "Sulawesi Barat", 25,  ifelse(Province == "Sulawesi Selatan", 26, ifelse(Province == "Sulawesi Tengah", 27, ifelse(Province == "Sulawesi Tenggara", 28, ifelse(Province == "Sulawesi Utara", 29, ifelse(Province == "Sumatera Barat", 30, ifelse(Province == "Sumatera Selatan", 31, 32)))))))))))))))))))))))))))))))))) # "Sumatera Utara" left out of ifelse statement!
+                
+                idName1 <- idName%>% # In previous iteration, numbers were from 0-33, now they are 1-34 so add 1 to each of the numbers to match
+                        mutate(ID_1 = id + 1)
+                
+                oo <- merge(Indonesia, idName1, by="ID_1") # Merge the shape file and the dataframe
                 
                 oo$Value <- as.numeric(as.character(oo$Value)) # Coerce Value into numeric data type
                 
@@ -134,9 +131,15 @@ server <- function(input, output){
                                 geom_col(fill = c("#1CABE2"))+ 
                                 labs(x = "Province", y= "Value") +
                                 coord_flip() + 
-                                theme_hc()
-                        print(p)
-                })
+                                theme_hc() +
+                                geom_text(aes(label = Value), size = 3, fontface = 2, hjust = 1, col = "white")
+                        
+                        p + theme(legend.title=element_blank(),
+                                  axis.ticks.y = element_blank(),
+                                  plot.background = element_rect(fill = "grey88"),
+                                  panel.background = element_rect(fill = "grey88"),
+                                  legend.background = element_rect(fill = "grey88"))                
+                        })
                 
                 labels <- sprintf( # Define what should come up in the pop-up
                         "<strong>%s</strong><br/>%g &#37", # Province name in bold, enter, value with a % sign after
