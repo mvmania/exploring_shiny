@@ -1,5 +1,4 @@
-# Map with navigation bar and bar graph and table
-#   Cannot get to compile, may be a RAM issue?
+# Map with navigation bar and bar graph
 
 ## Load Packages
 
@@ -10,13 +9,14 @@ library(leaflet)   # Interactive maps with pop-ups
 library(ggplot2)   # Generate plots
 library(ggthemes)  # Plot themes
 require(sp)        # Used to merge shape file and data frame
+library(plotly)
 
 ## The Shape File
 
 # Path to use when playing
-Indonesia <- readOGR(dsn = "/Users/User/Desktop/R Prac/UNICEF Project/exploring_shiny/InteractiveMapBarTable/shape1", "IDN_adm1") # Shapefile 
+#Indonesia <- readOGR(dsn = "/Users/User/Desktop/R Prac/UNICEF Project/exploring_shiny/InteractiveMapWithBarGraph/IDN_adm1", "IDN_adm1") # Shapefile 
 # Path to use when publishing
-# Indonesia <- readOGR(dsn = ".", "IDN_adm1") # Shapefile 
+Indonesia <- readOGR(".", "IDN_adm1") # Shapefile
 
 ## What are the map boundaries?
 
@@ -29,7 +29,7 @@ lat <- (bnds[2,1]-bnds[2,2]/2) - bnds[2,1] # The central latitude of the map
 ## The Province Data
 
 # Path to use when playing
-df = read.csv(file = "/Users/User/Desktop/R Prac/UNICEF Project/exploring_shiny/InteractiveMapWithBarGraph/SDG.csv", sep=",") # SDG Data
+ df = read.csv(file = "/Users/User/Desktop/R Prac/UNICEF Project/exploring_shiny/InteractiveMapWithBarGraph/SDG.csv", sep=",") # SDG Data
 
 # Path to use when publishing
 #df = read.csv(file = "SDG.csv", sep=",")
@@ -52,9 +52,10 @@ idName1 <- idName%>% # In previous iteration, numbers were from 0-33, now they a
 
 
 ui <- navbarPage(theme = "bootstrap.css",
-                 
-                 # Tab panels for inputs ----
-                 tabPanel(
+                # Title       
+                titlePanel("Map of Selected Sustainable Development Goal Indicator"),
+                # Tab panels for inputs ----
+                tabPanel(
                          # SDG Input
                          selectInput("select1", "", 
                                      choices = c("Goal 1: No Poverty" = 1, 
@@ -73,28 +74,21 @@ ui <- navbarPage(theme = "bootstrap.css",
                          uiOutput("select2")
                  ),
                  
-                 
-                 
-                 # Map output
-                  leafletOutput("mymap"),
-                 
-                 hr(),
-                 
-                 column(8,
-                        # Table output
-                        DT::dataTableOutput("SDGtable1"),
-                        # Button
-                        downloadButton("downloadData", "Download")
-                        ),
-                 
-                 # Bar Graph
-                 column(4, plotOutput("plot1"))        
+                
+                
+                # Map output
+                 column(8, leafletOutput("mymap")),
+                # Bar Graph
+                column(4, plotOutput("plot1"))        
 )
 
 
 
 server <- function(input, output){
-     
+        
+        # Put country shapedata in temporary var
+        oo <- Indonesia
+        
         # Generate reactive list of Indicators for the selected SDG               
         output$select2 <- renderUI({
                 choice <-  unique(idName1[idName1$SDG %in% input$select1, "Indicator"]) # Subset Indicator for selected SDG
@@ -103,17 +97,15 @@ server <- function(input, output){
                             choices = choice, # Indicator options for the selected SDG
                             selected = choice[1]) # Select the first Indicator for the selected SDG
         })
-        
+     
         # Generate reactive data frame with selected SDG and Indicator
-        oo1 <-reactive({
+        SDG1 <-reactive({
                 SDG1 <- idName1 %>% 
                         filter(idName1$SDG %in% input$select1, #Subset selected SDG from data frame
                                idName1$Indicator %in% input$select2 # Subset selected Indicators from the resulting data frame
                         )
                 
-                provIndo <- merge(Indonesia, SDG1, by="ID_1") # Merge the shape file and the dataframe
-                
-                provIndo # New data output
+                SDG1
         })
         
         # Merge the shape file and the dataframe
@@ -128,7 +120,9 @@ server <- function(input, output){
         
         observe({
                 
-                oo <- oo1()
+                SDGoo <- SDG1()
+                
+                oo <- merge(Indonesia, SDGoo, by="ID_1") # Merge the shape file and the dataframe
                 
                 oo$Value <- as.numeric(as.character(oo$Value)) # Coerce Value into numeric data type
                 
@@ -145,7 +139,7 @@ server <- function(input, output){
                 })
                 
                 labels <- sprintf( # Define what should come up in the pop-up
-                        "<strong>%s</strong><br/>%g &#37", # Province name in bold, enter, value with a % sign after value
+                        "<strong>%s</strong><br/>%g &#37", # Province name in bold, enter, value with a % sign after
                         oo$Province, oo$Value # Calling the province and the value
                 ) %>% lapply(htmltools::HTML) # Applying HTML
                 
@@ -189,22 +183,8 @@ server <- function(input, output){
                                         lat = lat, # Center on defined latitude 
                                         zoom = 4) # Zoom in how close
                 })
-                
-                # Generate data table 
-                output$SDGtable1 <- DT::renderDataTable({
-                        DT::datatable(oo2 <- cbind.data.frame(SDG = oo$SDG , Indicator = oo$Indicator, Value = oo$Value, Province = oo$Province))
-                })
-                
-                # Downloadable csv of selected dataset ----
-                output$downloadData <- downloadHandler(
-                        filename = function() {
-                                paste(input$dataset, ".csv", sep = "")
-                        },
-                        content = function(file) {
-                                write.csv(datasetInput(), file, row.names = FALSE)
-                        })
         })         
-        
+                
 }
 
 
