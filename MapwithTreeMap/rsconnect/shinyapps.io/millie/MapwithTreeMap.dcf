@@ -1,0 +1,13 @@
+name: MapwithTreeMap
+title: MapwithTreeMap
+username:
+account: millie
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 224554
+bundleId: 1023409
+url: https://millie.shinyapps.io/MapwithTreeMap/
+when: 1507819905.95121
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: www/StaticTree.png
