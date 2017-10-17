@@ -121,7 +121,7 @@ server <- function(input, output){
                         filter(Level == "Provincial") # Select only the provential level data rows
                 
                 SDGpCol <- SDGp %>% # Select the variables that apply to the provinces 
-                        select("SDG" = "SDG.Goal", "Indicator" = "Indicator", "Value" = "Value", "Province" = "Province") # Rename the variables to make them easier to work with and select the ones that apply to our needs
+                        select("SDG" = "SDG.Goal", "Indicator", "Data", "Value" = "Value", "Province" = "Province") # Rename the variables to make them easier to work with and select the ones that apply to our needs
                 
                 SDGpColNam <- SDGpCol %>% #Bind province names from the dataset to their numeric equivalents in the shapefile- ID_1
                         mutate(id = ifelse(Province == "Aceh", 0, ifelse(Province == "Bali", 1, ifelse(Province == "Banten", 3, ifelse(Province == "Bengkulu", 4, ifelse(Province == "DI Yogyakarta", 33, ifelse(Province == "DKI Jakarta", 7, ifelse(Province == "Gorontalo", 5, ifelse(Province == "Jambi", 8, ifelse(Province == "Jawa Barat", 9, ifelse(Province == "Jawa Tengah", 10, ifelse(Province == "Jawa Timur", 11, ifelse(Province == "Kalimantan Barat", 12, ifelse(Province == "Kalimantan Selatan", 13, ifelse(Province == "Kalimantan Tengah", 14, ifelse(Province == "Kalimantan Timur", 15, ifelse(Province == "Kalimantan Utara", 16, ifelse(Province == "Kepulauan Bangka Belitung", 2,  ifelse(Province == "Kepulauan Riau", 17, ifelse(Province == "Lampung", 18, ifelse(Province == "Maluku", 20, ifelse(Province == "Maluku Utara", 19, ifelse(Province == "Nusa Tenggara Barat", 21,  ifelse(Province == "Nusa Tenggara Timur", 22, ifelse(Province == "Papua", 23, ifelse(Province == "Papua Barat", 6, ifelse(Province == "Riau", 24, ifelse(Province == "Sulawesi Barat", 25,  ifelse(Province == "Sulawesi Selatan", 26, ifelse(Province == "Sulawesi Tengah", 27, ifelse(Province == "Sulawesi Tenggara", 28, ifelse(Province == "Sulawesi Utara", 29, ifelse(Province == "Sumatera Barat", 30, ifelse(Province == "Sumatera Selatan", 31, 32)))))))))))))))))))))))))))))))))) # "Sumatera Utara" left out of ifelse statement!
@@ -133,11 +133,13 @@ server <- function(input, output){
                 
                 oo$Value <- as.numeric(as.character(oo$Value)) # Coerce Value into numeric data type
                 
-                # Labels for pop-ups
+                groot <- droplevels(SDGoo$Data[1])
+                
                 labels <- sprintf( # Define what should come up in the pop-up
-                        "<strong>%s</strong><br/>%g", # Province name in bold, enter, value with a % sign after
+                        "<strong>%s</strong><br/>%g &#37", # Province name in bold, enter, value with a % sign after
                         oo$Province, oo$Value # Calling the province and the value
                 ) %>% lapply(htmltools::HTML) # Applying HTML
+                
                 
                 # Boundaries for map
                 bnds <- Indonesia@bbox # The boundaries of the shapefile
@@ -230,7 +232,7 @@ server <- function(input, output){
                 # Generating tree map
                 output$Tree <- renderPlot({
                         treeMapPlot <- ggplot(SDGnFin, aes(area = Value, fill = variable, label = c(value), subgroup = variable)) +
-                                geom_treemap(stat = "identity", colour = "white") + # Group borders white
+                                geom_treemap(stat = "identity", colour = "white", size = 2) + # Group borders white
                                 scale_x_continuous(expand = c(0, 0)) +
                                 scale_y_continuous(expand = c(0, 0)) +
                                 scale_fill_manual(values = rev(c('#C0BDBC', '#00689D', '#991D2E', '#DB8E3E', '#DDA63A'))) + # UNICEF report colours
@@ -240,7 +242,7 @@ server <- function(input, output){
                                                   reflow=TRUE, # Wrap text if too long for the box
                                                   size = 15, # Text size 
                                                   na.rm = FALSE)+ # Remove NAs
-                                geom_treemap_subgroup_border(size = 3, colour = "white") + 
+                                geom_treemap_subgroup_border(size = 2, colour = "white") + 
                                 theme(legend.title=element_blank())
                         
                         goo <- droplevels(SDGnFin$Data[1])
