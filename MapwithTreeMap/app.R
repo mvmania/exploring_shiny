@@ -12,6 +12,7 @@ library(ggthemes)  # Themes for plots
 library(treemapify)# Generate tree maps with ggplot
 library(reshape2)  # More data munging- melting
 require(sp)        # Used to merge shape file and data frame
+library(scales)    # Add commas to numbers in figures 
   
 ## The Shape File
 
@@ -21,9 +22,7 @@ Indonesia <- readOGR(".", "IDN_adm1") # Shapefile
 ## The Province Data
 
 # Path to data table
-# df = read.csv(file = "/Users/User/Desktop/R Prac/UNICEF Project/exploring_shiny/MapwithTreeMap/SDG_Millie_vb_edit_provinces_v2.csv", sep=",") # SDG Data
-
- df = read.csv(file = "SDG_Millie_vb_edit_provinces_v2.csv", sep=",") # Original table
+df = read.csv(file = "SDG_Millie_vb_edit_provinces_v2.csv", sep=",") # Original table
 
 SDG = df[,colSums(is.na(df)) != nrow(df)] # Remove empty columns
 
@@ -136,7 +135,7 @@ server <- function(input, output){
                 
                 # Labels for pop-ups
                 labels <- sprintf( # Define what should come up in the pop-up
-                        "<strong>%s</strong><br/>%g &#37", # Province name in bold, enter, value with a % sign after
+                        "<strong>%s</strong><br/>%g", # Province name in bold, enter, value with a % sign after
                         oo$Province, oo$Value # Calling the province and the value
                 ) %>% lapply(htmltools::HTML) # Applying HTML
                 
@@ -189,7 +188,7 @@ server <- function(input, output){
                                 setView( # Define map boundaries
                                         lng = long, # Center on defined longitude
                                         lat = lat, # Center on defined latitude 
-                                        zoom = 4.7) # Zoom in how close
+                                        zoom = 4.5) # Zoom in how close
                 })
                 
                 ## Tree Map of National Data 
@@ -200,7 +199,8 @@ server <- function(input, output){
                 
                 SDGnCol <- SDGn %>% # Select columns containing national data
                         select("SDG" = "SDG.Goal", 
-                               "Indicator" = "Indicator", 
+                               "Indicator", 
+                               "Data",
                                "Value" = "Value",
                                "Sex" = "Gender..All.Male.Female.", # Title found in the report on page 25
                                "Residence" = "Geography..All.Urban.Rural.", # Title found in the report on page 25
@@ -217,7 +217,7 @@ server <- function(input, output){
                                                    "Total", # Title found in the report on page 25
                                                    "All"))
                 
-                SDGnColTotMut <- melt(SDGnColTot, id=c("SDG", "Indicator", "Value")) # Select specific columns before combining Sex/Residence/Disability/Wealth Quintile/Education/Total Population into 1 col
+                SDGnColTotMut <- melt(SDGnColTot, id=c("SDG", "Indicator", "Data", "Value")) # Select specific columns before combining Sex/Residence/Disability/Wealth Quintile/Education/Total Population into 1 col
                 
                 SDGnFin <- SDGnColTotMut %>%
                         filter(value != "All") # Remove all rows where value does not apply to a specific subcategroy 
@@ -230,14 +230,32 @@ server <- function(input, output){
                 # Generating tree map
                 output$Tree <- renderPlot({
                         treeMapPlot <- ggplot(SDGnFin, aes(area = Value, fill = variable, label = c(value), subgroup = variable)) +
-                                geom_treemap(stat = "identity") +
+                                geom_treemap(stat = "identity", colour = "white") + # Group borders white
                                 scale_x_continuous(expand = c(0, 0)) +
                                 scale_y_continuous(expand = c(0, 0)) +
-                                scale_fill_manual(values = rev(c('#C0BDBC', '#00689D', '#991D2E', '#DB8E3E', '#DDA63A'))) +
-                                geom_treemap_text(aes(label = value), colour = "white", place = "center", reflow=TRUE, size = 15, na.rm = FALSE)+
-                                geom_treemap_text(aes(label = Value), colour = "white", place = "bottomright", size = 10)+
-                                geom_treemap_subgroup_border(size=2)
-                        treeMapPlot + theme(legend.title=element_blank())
+                                scale_fill_manual(values = rev(c('#C0BDBC', '#00689D', '#991D2E', '#DB8E3E', '#DDA63A'))) + # UNICEF report colours
+                                geom_treemap_text(aes(label = value), # Category text options
+                                                  colour = "white", # Subgroup borders white
+                                                  place = "center", # Category label center
+                                                  reflow=TRUE, # Wrap text if too long for the box
+                                                  size = 15, # Text size 
+                                                  na.rm = FALSE)+ # Remove NAs
+                                geom_treemap_subgroup_border(size = 3, colour = "white") + 
+                                theme(legend.title=element_blank())
+                        
+                        goo <- droplevels(SDGnFin$Data[1])
+                        
+                        if(goo[1]=="Number"){
+                                treeMapPlot + geom_treemap_text(aes(label = paste0(comma(SDGnFin$Value))), 
+                                                                colour = "white", 
+                                                                place = "bottomright", 
+                                                                size = 9)
+                        } else {treeMapPlot + geom_treemap_text(aes(label = paste0(SDGnFin$Value, "%")), 
+                                                                    colour = "white", 
+                                                                    place = "bottomright", 
+                                                                    size = 9)
+                        }
+                
                 })
         })
         
