@@ -1,0 +1,12 @@
+name: ProvinceTable
+title: ProvinceTable
+username:
+account: millie
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 227205
+bundleId: 1036126
+url: https://millie.shinyapps.io/ProvinceTable/
+when: 1508486918.35665
+asMultiple: FALSE
+asStatic: FALSE

@@ -19,14 +19,42 @@ df = read.csv(file = "SDG.csv", sep=",")
 SDG = df[,colSums(is.na(df)) != nrow(df)]
 
 SDGdf1 <- SDG[1:4112,] %>% # Create a new variable that describes if data National or Provincial level data
-        mutate(Level = ifelse(Province == "All Indonesia", "National", 
-                              "Provincial")) 
-SDGdf2 <- SDGdf1 %>% # Subset the National data only
-        filter(Level == "National")
+        mutate(Level = ifelse(Province == "All Indonesia", 
+                              "National", 
+                              "Provincial")) %>%
+        mutate(Quintile = ifelse(# Generate a column with wealth categories to match those found in the report on page 25
+                Wealth.Quintile..All.Poorest.Second.Middle.Fourth.Richest. == "Q5 (wealthiest)", "Richest 20%", 
+                ifelse(Wealth.Quintile..All.Poorest.Second.Middle.Fourth.Richest. == "Q1 (poorest)", "Poorest 20%", 
+                       ifelse(Wealth.Quintile..All.Poorest.Second.Middle.Fourth.Richest. == "Q2", "Second 20%", 
+                              ifelse(Wealth.Quintile..All.Poorest.Second.Middle.Fourth.Richest. == "Q3", "Middle 20%", 
+                                     ifelse(Wealth.Quintile..All.Poorest.Second.Middle.Fourth.Richest. == "Q4", "Fourth 20%", "All"))))))%>%
+        mutate(Ed = ifelse(# Generate a column with education categories to match those found in the report on page 25
+                Educational.attainment.of.household.head == "No school", "None", 
+                ifelse(Educational.attainment.of.household.head == "Incomplete primary school (SD)/Islamic primary school (MI)", "Some Primary",
+                       ifelse(Educational.attainment.of.household.head == "Incomplete primary school", "Some Primary",
+                              ifelse(Educational.attainment.of.household.head == "Graduated primary school", "Primary",
+                                     ifelse(Educational.attainment.of.household.head == "Graduated primary school (SD/MI)", "Primary", 
+                                            ifelse(Educational.attainment.of.household.head == "Some secondary school", "Some Secondary",
+                                                   ifelse(Educational.attainment.of.household.head == "Graduated junior secondary school (SMP/MTS)", "Junior Secondary",
+                                                          ifelse(Educational.attainment.of.household.head == "Graduated from secondary school", "Secondary", 
+                                                                 ifelse(Educational.attainment.of.household.head == "Graduated senior secondary school (SMA/MA)", "Senior Secondary",     
+                                                                        ifelse(Educational.attainment.of.household.head == "More than secondary school", "Some Tertiary",
+                                                                               ifelse(Educational.attainment.of.household.head == "Graduated university (D1-D3/PT)", "Tertiary", "All")))))))))))) 
 
-SDGdf <- SDGdf2 %>% # Select the variables that apply to the National data 
-        select("SDG" = "SDG.Goal", "Indicator" = "Indicator", "Value" = "Value","Gender" = "Gender..All.Male.Female.", "Geography" = "Geography..All.Urban.Rural.", "Disability" = "Disability..All.With.Without.", "WealthQuintile" = "Wealth.Quintile..All.Poorest.Second.Middle.Fourth.Richest.", "Education" = "Educational.attainment.of.household.head", "Age" = "Age.Range..i.e..0.24.M..15.60.Y.", "Year" = "Year", "Source" = "Source")
-
+SDGdf <- SDGdf1 %>% # Subset the National data only
+        filter(Level == "National")%>%
+        select("SDG" = "SDG.Goal", # Select the variables that apply to the National data
+               "Indicator", 
+               "Value", 
+               "Sex" = "Gender..All.Male.Female.", 
+               "Residence" = "Geography..All.Urban.Rural.", 
+               "Disability" = "Disability..All.With.Without.", 
+               "WealthQuintile" = "Quintile", 
+               "Education" = "Ed", 
+               "Age" = "Age.Range..i.e..0.24.M..15.60.Y.", 
+               "Year", 
+               "Source")
+        
 # The app
 ui <- fluidPage(theme = "bootstrap.css", #Styling CSS
         # App title ----
@@ -122,23 +150,23 @@ server <- function(input, output){
                                       deferRender = FALSE, # For use with large data sets to determine when an UI action is rendered 
                                       scrollY = 475, # Verticle scrolling, numeric value determines height of table- 475 displays 13 row with the current CSS  
                                       scroller = TRUE, # Should the scroller appear
-                                      columnDefs = list(list(targets = c(1,2), visible = FALSE)))) %>% # Make SDG and Indicator columns (cols 1 and 2) invisible, could not get to work with c("SDG", "Indicator") or oo$Indicator
-                                      formatStyle("Value", # Format around the value column
-                                                background = styleColorBar(range(oo$Value), '#1CABE2'), # Generate bars in value cells
-                                                backgroundSize = '98% 88%', # Maximum size bars can take in cells
-                                                backgroundRepeat = 'no-repeat', # Background unique to each cell in column
-                                                backgroundPosition = 'center', # Bars at center hight in cells
-                                                fontWeight = 'bold') #Make values bold so that they are easier to see with bars
+                                      columnDefs = list(list(targets = c(1,2), visible = FALSE)))) #%>% # Make SDG and Indicator columns (cols 1 and 2) invisible, could not get to work with c("SDG", "Indicator") or oo$Indicator
+                                      #formatStyle("Value", # Format around the value column
+                                       #         background = styleColorBar(range(oo$Value), '#1CABE2'), # Generate bars in value cells
+                                        #        backgroundSize = '98% 88%', # Maximum size bars can take in cells
+                                         #       backgroundRepeat = 'no-repeat', # Background unique to each cell in column
+                                          #      backgroundPosition = 'center', # Bars at center hight in cells
+                                           #     fontWeight = 'bold') #Make values bold so that they are easier to see with bars
         })
         })
         
         # Downloadable csv of selected dataset ----
         output$downloadData <- downloadHandler(
                 filename = function() {
-                        paste(input$dataset, ".csv", sep = "")
-                }, # Generate a .csv file
+                        paste(input$dataset, "SDGdf.csv", sep = ",")
+                        }, # Generate a .csv file
                 content = function(file) {
-                        write.csv(datasetInput(), file, row.names = FALSE)
+                        write.csv(df(), file, na="")
                 }) # Write .csv to a particular directory 
         
 }
