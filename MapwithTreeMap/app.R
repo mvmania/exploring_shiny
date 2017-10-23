@@ -1,3 +1,10 @@
+# ----------------------------------------------------------------------------
+#"THE BEER-WARE LICENSE" (Revision 42):
+# <e5t20aah@gmail.com> wrote this file.  As long as you retain this notice you
+# can do whatever you want with this stuff. If we meet some day, and you think
+# this stuff is worth it, you can buy me a beer in return. Amelia Hilgart Oct. 2017
+# ----------------------------------------------------------------------------
+
 # Map with Tree Map
 
 # Age is being removed from the variables considered as it will need serious formatting and time does not currently permit.
@@ -55,7 +62,7 @@ SDGdf <- SDG[1:4112,] %>%
 ui <- navbarPage(theme = "bootstrap.css",
                 # Title       
                 titlePanel(""), # Blank title 
-                
+
                 # Tab panels for inputs ----
                 tabPanel(
                         # SDG Input
@@ -133,12 +140,10 @@ server <- function(input, output){
                 
                 oo$Value <- as.numeric(as.character(oo$Value)) # Coerce Value into numeric data type
                 
-                groot <- droplevels(SDGoo$Data[1])
+                strVal <- paste0("<strong><a href='http://unicef.org.dedi642.your-server.de/indonesia-provinces/'/>%s</a></strong><br/>", prettyNum(oo$Value,big.mark=','), sep='')
                 
-                labels <- sprintf( # Define what should come up in the pop-up
-                        "<strong>%s</strong><br/>%g &#37", # Province name in bold, enter, value with a % sign after
-                        oo$Province, oo$Value # Calling the province and the value
-                ) %>% lapply(htmltools::HTML) # Applying HTML
+                labels <- sprintf(strVal, oo$Province, strVal
+                ) %>% lapply(htmltools::HTML)
                 
                 
                 # Boundaries for map
@@ -173,8 +178,8 @@ server <- function(input, output){
                                                 dashArray = "", # Line type for pop-up boundaries
                                                 fillOpacity = 0.7, # Opacity of pop-up boundaries 
                                                 bringToFront = TRUE), # Bring the pop-up boundaries in front of the border lines?
-                                        label = labels, # Labels defined above
-                                        labelOptions = labelOptions( # Options for the text inside the pop-up
+                                        popup = labels, # Labels defined above
+                                        popupOptions = labelOptions( # Options for the text inside the pop-up
                                                 style = list(
                                                         "font-weight" = "normal", 
                                                         padding = "3px 8px"), # Text style options
@@ -190,7 +195,7 @@ server <- function(input, output){
                                 setView( # Define map boundaries
                                         lng = long, # Center on defined longitude
                                         lat = lat, # Center on defined latitude 
-                                        zoom = 4.5) # Zoom in how close
+                                        zoom = 4.25) # Zoom in how close
                 })
                 
                 ## Tree Map of National Data 
@@ -245,9 +250,9 @@ server <- function(input, output){
                                 geom_treemap_subgroup_border(size = 2, colour = "white") + 
                                 theme(legend.title=element_blank())
                         
-                        goo <- droplevels(SDGnFin$Data[1])
+                        NumPer <- droplevels(SDGnFin$Data[1])
                         
-                        if(goo[1]=="Number"){
+                        if(NumPer=="Number"){
                                 treeMapPlot + geom_treemap_text(aes(label = paste0(comma(SDGnFin$Value))), 
                                                                 colour = "white", 
                                                                 place = "bottomright", 
