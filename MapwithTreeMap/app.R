@@ -63,6 +63,7 @@ ui <- navbarPage(theme = "bootstrap.css",
                 # Title       
                 titlePanel(""), # Blank title 
 
+
                 # Tab panels for inputs ----
                 tabPanel(
                         # SDG Input
@@ -82,6 +83,7 @@ ui <- navbarPage(theme = "bootstrap.css",
                 tabPanel(
                         # Indicator Input 
                         uiOutput("select2") # Reactive input name
+                        
                 ),
                 
                 # The rest of UI will fall below the tab panel 
@@ -178,8 +180,8 @@ server <- function(input, output){
                                                 dashArray = "", # Line type for pop-up boundaries
                                                 fillOpacity = 0.7, # Opacity of pop-up boundaries 
                                                 bringToFront = TRUE), # Bring the pop-up boundaries in front of the border lines?
-                                        popup = labels, # Labels defined above
-                                        popupOptions = labelOptions( # Options for the text inside the pop-up
+                                        label = labels, # Labels defined above
+                                        labelOptions = labelOptions( # Options for the text inside the pop-up
                                                 style = list(
                                                         "font-weight" = "normal", 
                                                         padding = "3px 8px"), # Text style options
