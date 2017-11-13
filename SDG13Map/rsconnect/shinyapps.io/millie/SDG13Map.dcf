@@ -1,0 +1,12 @@
+name: SDG13Map
+title: SDG13Map
+username:
+account: millie
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 229027
+bundleId: 1072417
+url: https://millie.shinyapps.io/SDG13Map/
+when: 1510563401.23958
+asMultiple: FALSE
+asStatic: FALSE

@@ -1,0 +1,43 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+## Load Packages
+library(shiny)     # Make the app 
+library(leaflet)   # Interactive maps with pop-ups   
+library(rgdal)     # R wrapper around GDAL/OGR
+library(dplyr)     # Data manipulation 
+require(sp)        # Used to merge shape file and data frame
+library(scales)    # Add commas to numbers in figures 
+
+## The Shape File
+
+# Path to shapefile
+Indonesia <- readOGR(".", "IDN_adm1") # Shapefile 
+
+## The Province Data
+
+# Path to data table
+df = read.csv(file = "SDG_Millie_vb_edit_provinces_v2.csv", sep=",") # Original table
+
+SDG = df[,colSums(is.na(df)) != nrow(df)] # Remove empty columns
+
+# Generate some new columns 
+SDGdf <- SDG[1:4112,] %>%
+        mutate(Level = ifelse(Province == "All Indonesia", # Generate a column to distinguish national and provincial data
+                              "National", 
+                              "Provincial"))%>%
+        filter(Level == "Provincial", SDG.Goal == 13)%>%
+filter(Indicator == "Percentage of education facilities affected by disaster")%>% # Select the variables that apply to the provinces 
+                        select("SDG" = "SDG.Goal", "Indicator", "Data", "Value" = "Value", "Province" = "Province") # Rename the variables to make them easier to work with and select the ones that apply to our needs
+                SDGdf$Value <- as.numeric(as.character(SDGdf$Value)) # Coerce Value into numeric data type
+                
+                bins <- quantile(SDGdf$Value, 
+                                 probs = seq(0, 1, length.out = 5), na.rm = TRUE) # Generate quantile ranges to map
+                
+                pal <- colorBin(UNICEF, domain = oo$Value, bins = bins, na.color = "#F1F1F1") # Define palette
+                
+```
+
