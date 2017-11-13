@@ -1,0 +1,12 @@
+name: SDG6Map
+title: SDG6Map
+username:
+account: millie
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 229026
+bundleId: 1072412
+url: https://millie.shinyapps.io/SDG6Map/
+when: 1510562901.85802
+asMultiple: FALSE
+asStatic: FALSE
