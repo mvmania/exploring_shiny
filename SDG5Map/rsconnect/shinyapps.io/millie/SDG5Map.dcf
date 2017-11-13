@@ -1,0 +1,12 @@
+name: SDG5Map
+title: SDG5Map
+username:
+account: millie
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 229025
+bundleId: 1072405
+url: https://millie.shinyapps.io/SDG5Map/
+when: 1510562567.91692
+asMultiple: FALSE
+asStatic: FALSE
