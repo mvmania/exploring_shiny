@@ -5,8 +5,8 @@ account: millie
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 228975
-bundleId: 1043975
+bundleId: 1072342
 url: https://millie.shinyapps.io/InteractiveMapNavBar/
-when: 1508927216.60974
+when: 1510558550.35095
 asMultiple: FALSE
 asStatic: FALSE

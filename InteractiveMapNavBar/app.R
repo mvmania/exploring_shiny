@@ -151,6 +151,7 @@ server <- function(input, output){
                 
                 pal <- colorBin(UNICEF, domain = oo$Value, bins = bins, na.color = "#F1F1F1") # Define palette
                 
+                # Generating map 
                 output$mymap <- renderLeaflet({
                         leaflet(data = oo) %>% 
                                 addPolygons( # From the shape file, what to map
@@ -177,7 +178,7 @@ server <- function(input, output){
                                         pal = pal, # Previously defined palette
                                         values = ~Value, # Values from data frame 
                                         opacity = 1, # Opacity of legend colour markers
-                                        title = "Data Quantiles", # Title
+                                        title = "Data Quintiles", # Title
                                         position = "bottomleft")%>% # Where the legend is positioned
                                 
                                 setView( # Define map boundaries
@@ -189,6 +190,6 @@ server <- function(input, output){
         })
 }
 
-shinyApp(ui, server)
+shinyApp(ui, server) # Generate app
 
 

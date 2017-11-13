@@ -1,0 +1,12 @@
+name: InteractiveMapWithBarGraph
+title: InteractiveMapWithBarGraph
+username:
+account: millie
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 224494
+bundleId: 1023204
+url: https://millie.shinyapps.io/InteractiveMapWithBarGraph/
+when: 1507808507.09002
+asMultiple: FALSE
+asStatic: FALSE
