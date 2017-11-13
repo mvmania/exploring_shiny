@@ -1,7 +1,5 @@
 # Map SDG 1
 
-# Age is being removed from the variables considered as it will need serious formatting and time does not currently permit.
-
 ## Load Packages
 library(shiny)     # Make the app 
 library(leaflet)   # Interactive maps with pop-ups   
@@ -18,7 +16,7 @@ Indonesia <- readOGR(".", "IDN_adm1") # Shapefile
 ## The Province Data
 
 # Path to data table
-df = read.csv(file = "SDG_Millie_vb_edit_provinces_v2.csv", sep=",") # Original table
+df = read.csv(file = "SDG_Millie_vb_edit_provinces_v2_SuCor.csv", sep=",") # Original table
 
 SDG = df[,colSums(is.na(df)) != nrow(df)] # Remove empty columns
 
@@ -32,19 +30,36 @@ SDGdf <- SDG[1:4112,] %>%
 
 ## The app
 ui <- navbarPage(theme = "bootstrap.css",
-                 # Title       
+
                  titlePanel(""), # Blank title 
                  
-                 # Tab panels for inputs ----
-                 tabPanel(
+                 sidebarLayout(
+                         
+                         position = c("right"),
+                 
+                         # Sidebar with a slider input
+                         sidebarPanel(
+                                 width = 4,
                          # Indicator Input 
-                         uiOutput("select2") # Reactive input name
-                 ),
+                                 uiOutput("select2"), # Reactive input name
+                                 shiny::a(h4("Download GOAL 1- PDF", # Downloadable data button options
+                                             class = "btn btn-default action-button", # Class of component
+                                             id = "button1", # Component ID
+                                             style = "padding:15px 48px; 
+                                                      fontweight:600; 
+                                                      background-color: #E5243B; 
+                                                      width: 100%; 
+                                                      border-color: #f2f2f2"), # Button style attributes 
+                                          target = "_blank", # Opens the linked document in a new window or tab
+                                          href = paste0("http://www.sdg4children.or.id/wp-content/uploads/2017/10/Goal-1.pdf")) # URL to downloadable data
+                                 ),
                  
-                 # The rest of UI will fall below the tab panel 
+                 # Main panel
                  
+                 mainPanel(
                  # Map output
-                 column(7, leafletOutput("mymap")) # The map
+                 leafletOutput("mymap")) # The map
+                 )
        
 )        
 
@@ -93,7 +108,7 @@ server <- function(input, output){
                 
                 oo$Value <- as.numeric(as.character(oo$Value)) # Coerce Value into numeric data type
                 
-                strVal <- paste0("<strong><a href='http://unicef.org.dedi642.your-server.de/about-sdgs-and-children-in-indonesia'/>%s</a></strong><br/>", prettyNum(oo$Value,big.mark=','), sep='')
+                strVal <- paste0("<strong><a href='http://unicef.org.dedi642.your-server.de/indonesia-provinces/'/>%s</a></strong><br/>", prettyNum(oo$Value,big.mark=','), sep='') # Add commas to large
                 
                 labels <- sprintf(strVal, oo$Province, strVal
                 ) %>% lapply(htmltools::HTML)
@@ -142,17 +157,17 @@ server <- function(input, output){
                                         pal = pal, # Previously defined palette
                                         values = ~Value, # Values from data frame 
                                         opacity = 1, # Opacity of legend colour markers
-                                        title = NULL, # Title
+                                        title = "Data Quintiles", # Title
                                         position = "bottomleft")%>% # Where the legend is positioned
                                 
                                 setView( # Define map boundaries
                                         lng = long, # Center on defined longitude
                                         lat = lat, # Center on defined latitude 
-                                        zoom = 4.5) # Zoom in how close
+                                        zoom = 4.9) # Zoom in how close
                 })
         })
 }
 
-shinyApp(ui, server)        
+shinyApp(ui, server) # Generate app        
 
 
