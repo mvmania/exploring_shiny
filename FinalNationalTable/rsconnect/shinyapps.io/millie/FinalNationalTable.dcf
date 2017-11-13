@@ -5,8 +5,8 @@ account: millie
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 222195
-bundleId: 1012066
+bundleId: 1034977
 url: https://millie.shinyapps.io/FinalNationalTable/
-when: 1507196788.0601
+when: 1508424738.09613
 asMultiple: FALSE
 asStatic: FALSE
