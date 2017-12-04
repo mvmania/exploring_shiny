@@ -52,13 +52,14 @@ ui <- navbarPage(theme = "bootstrap.css",
                                                       border-color: #f2f2f2"), # Button style attributes 
                                           target = "_blank", # Opens the linked document in a new window or tab
                                           href = paste0("http://www.sdg4children.or.id/wp-content/uploads/2017/10/Goal-1.pdf")) # URL to downloadable data
-                                 ),
-                 
+                         ),
                  # Main panel
                  
                  mainPanel(
                  # Map output
-                 leafletOutput("mymap")) # The map
+                 leafletOutput("mymap"), # The map
+                 h6("If no data shows after you have made your selection, there is no province-level information available.")
+                 )
                  )
        
 )        

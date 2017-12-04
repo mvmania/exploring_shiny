@@ -58,9 +58,10 @@ ui <- navbarPage(theme = "bootstrap.css",
                          
                          mainPanel(
                                  # Map output
-                                 leafletOutput("mymap")) # The map
+                                 leafletOutput("mymap"), # The map
+                                 h6("If no data shows after you have made your selection, there is no province-level information available.")
                          )
-                 
+                 )
                  )        
 
 server <- function(input, output){

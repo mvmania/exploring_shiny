@@ -5,8 +5,8 @@ account: millie
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 229020
-bundleId: 1072390
+bundleId: 1113451
 url: https://millie.shinyapps.io/SDG3Map/
-when: 1510562001.01449
+when: 1512369406.10156
 asMultiple: FALSE
 asStatic: FALSE
