@@ -144,7 +144,8 @@ server <- function(input, output){
                                         direction = "auto"))%>% # Left aligned, starting at upper left
                         
                         addLegend( # Legend options
-                                pal = pal, # Previously defined palette
+                                colors=c('#00689D','#991D2E','#DB8E3E','#DDA63A'), # colors instead of palette to provide labels
+                                labels=c("Highest 25%","Second 25%","Third 25%","Lowest 25%"), #simplyfied labels
                                 values = ~Value, # Values from data frame 
                                 opacity = 0.7, # Opacity of legend
                                 title = NULL, # Title
