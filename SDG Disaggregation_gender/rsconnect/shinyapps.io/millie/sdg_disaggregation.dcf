@@ -1,0 +1,12 @@
+name: sdg_disaggregation
+title: SDG Disaggregation
+username:
+account: millie
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 248667
+bundleId: 1147339
+url: https://millie.shinyapps.io/sdg_disaggregation/
+when: 1513920623.38714
+asMultiple: FALSE
+asStatic: FALSE
